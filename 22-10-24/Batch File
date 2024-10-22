@@ -93,5 +93,8 @@ It logs the backup operation and cleans up old backups that are older than 7 day
 The use of error checking ensures that only successfully copied files are counted,
 
 
+REM is a command used to add comments. Comments are non-executable lines that provide explanations or notes within the code
+
+
 
 
