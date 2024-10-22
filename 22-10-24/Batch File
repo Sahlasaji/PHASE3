@@ -1,0 +1,97 @@
+Sets up source and backup directories.
+Creates a backup directory based on the current date.
+Copies files from the source directory to the backup directory.
+Logs the backup information.
+Cleans up old backups that are older than 7 days.
+
+Copy code
+@echo off
+setlocal
+@echo off: This command disables the echoing of commands in the command prompt, making the output cleaner.
+setlocal: This command begins a local environment for the variables defined in the script. Changes to variables will not affect the global environment.
+batch
+
+
+
+
+REM Set source and backup directory
+set "SOURCE=C:\TestFiles"
+set "BACKUP_ROOT=D:\Backups"
+set "DATE=%date:~10,4%%date:~4,2%%date:~7,2%"  REM Format: YYYYMMDD
+set "BACKUP_DIR=%BACKUP_ROOT%\%DATE%"
+set "LOG_FILE=%BACKUP_DIR%\backup_log.txt"
+Setting Variables:
+SOURCE: Specifies the directory containing the files to be backed up.
+BACKUP_ROOT: Specifies the root directory where backups will be stored.
+DATE: Formats the current date into YYYYMMDD format by extracting parts of the date string using substring syntax (%date:~start,length%).
+BACKUP_DIR: Combines the BACKUP_ROOT and DATE to create a full path for the backup directory.
+LOG_FILE: Specifies the path for the log file where backup information will be recorded.
+batch
+
+
+REM Create backup directory if it doesn't exist
+if not exist "%BACKUP_DIR%" (
+    mkdir "%BACKUP_DIR%"
+)
+This block checks if the backup directory exists. If it does not exist, it creates the directory using the mkdir command.
+batch
+
+
+Copy code
+REM Copy files from source to backup directory
+set "FILE_COUNT=0"
+for %%F in ("%SOURCE%\*") do (
+    copy "%%F" "%BACKUP_DIR%"
+    if not errorlevel 1 (
+        set /a FILE_COUNT+=1
+    )
+)
+Copying Files:
+Initializes a counter variable FILE_COUNT to zero.
+The for loop iterates over all files in the SOURCE directory.
+Each file (%%F) is copied to the BACKUP_DIR.
+The if not errorlevel 1 condition checks if the copy operation was successful. If it was, the script increments the FILE_COUNT variable by 1.
+batch
+
+
+REM Log the backup information
+(
+    echo Backup Date: %date%
+    echo Backup Time: %time%
+    echo Number of files copied: %FILE_COUNT%
+) >> "%LOG_FILE%"
+Logging Information:
+This block uses parentheses to group commands that will output to the log file.
+It logs the current date, time, and the number of files copied to the specified log file (LOG_FILE).
+batch
+
+
+REM Cleanup old backups (older than 7 days)
+for /d %%D in ("%BACKUP_ROOT%\*") do (
+    REM Get the last modified date of the directory
+    forfiles /p "%%D" /d -7 >nul 2>&1
+    if not errorlevel 1 (
+        echo Deleting old backup: %%D
+        rmdir /s /q "%%D"
+    )
+)
+Cleaning Up Old Backups:
+The for /d loop iterates over all directories in the BACKUP_ROOT.
+The forfiles command checks if the directory is older than 7 days. If it is, it will return an error level of 0.
+If the condition is met (if not errorlevel 1), it echoes a message indicating which backup is being deleted and then uses rmdir /s /q to delete the directory and its contents silently.
+batch
+
+
+echo Backup completed successfully!
+pause
+Completion Message:
+Displays a message indicating that the backup process has completed successfully.
+The pause command waits for the user to press a key before closing the command prompt window, allowing them to see the completion message.
+Summary
+The script automates the process of backing up files from a specified source directory to a backup directory named with the current date.
+It logs the backup operation and cleans up old backups that are older than 7 days.
+The use of error checking ensures that only successfully copied files are counted,
+
+
+
+
