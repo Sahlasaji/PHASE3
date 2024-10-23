@@ -1,0 +1,14 @@
+Variables and Data Types
+Perl supports several data types, including:
+
+Scalars: Store single values, prefixed with a $ symbol.
+Arrays: Store lists of values, prefixed with a @ symbol.
+Hashes: Store key-value pairs, prefixed with a % symbol.
+
+Basic Debugger Commands:
+
+h: Help
+n: Next line
+s: Step into subroutine
+c: Continue execution
+q: Quit the debugger
