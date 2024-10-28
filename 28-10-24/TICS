@@ -1293,3 +1293,709 @@ public class Example
         }
     }
 }
+/////////////////////////////////////////////////////////////
+1. Use pattern matching instead of the "as" keyword
+Incorrect: Using as keyword
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+object obj = "Hello, World!";
+string str = obj as string; // Using 'as' keyword
+if (str != null)
+{
+    Console.WriteLine(str);
+}
+Correct: Using pattern matching
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+object obj = "Hello, World!";
+if (obj is string str) // Using pattern matching
+{
+    Console.WriteLine(str);
+}
+2. Use the correct way of casting
+Incorrect: Using direct cast without checking
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+object obj = "Hello, World!";
+string str = (string)obj; // Direct cast
+Console.WriteLine(str);
+Correct: Using as with null check
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+object obj = "Hello, World!";
+string str = obj as string; // Safe cast
+if (str != null)
+{
+    Console.WriteLine(str);
+}
+3. Use generic constraints if applicable
+Example with generic constraints
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example<T> where T : class // T must be a reference type
+{
+    public void Display(T item)
+    {
+        Console.WriteLine(item.ToString());
+    }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        Example<string> example = new Example<string>();
+        example.Display("Hello, Generics!");
+    }
+}
+4. Do not ignore method results
+Incorrect: Ignoring the result
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public int Calculate()
+{
+    return 42; // Some calculation
+}
+
+public void Main()
+{
+    Calculate(); // Ignoring the result
+}
+Correct: Using the result
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public int Calculate()
+{
+    return 42; // Some calculation
+}
+
+public void Main()
+{
+    int result = Calculate(); // Using the result
+    Console.WriteLine(result);
+}
+5. Do not throw exceptions from unexpected locations
+Incorrect: Throwing an exception in an unexpected location
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process()
+{
+    // Some code
+    throw new Exception("Unexpected error!"); // Unexpected location
+}
+Correct: Handle errors gracefully
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process()
+{
+    try
+    {
+        // Some code
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("An error occurred: " + ex.Message);
+    }
+}
+6. Document the exceptions that are explicitly thrown by a method or a property
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+/// <summary>
+/// Divides two numbers.
+/// </summary>
+/// <param name="numerator">The numerator.</param>
+/// <param name="denominator">The denominator.</param>
+/// <exception cref="DivideByZeroException">Thrown when the denominator is zero.</exception>
+public double Divide(double numerator, double denominator)
+{
+    if (denominator == 0)
+    {
+        throw new DivideByZeroException("Denominator cannot be zero.");
+    }
+    return numerator / denominator;
+}
+7. Always log that an exception is thrown
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process()
+{
+    try
+    {
+        // Some code that may throw an exception
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Error: " + ex.Message); // Log the exception
+        throw; // Rethrow the exception
+    }
+}
+8. Use standard exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void ValidateAge(int age)
+{
+    if (age < 0)
+    {
+        throw new ArgumentOutOfRangeException(nameof(age), "Age cannot be negative."); // Use standard exception
+    }
+}
+9. Throw informational exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process(int value)
+{
+    if (value < 0)
+    {
+        throw new ArgumentException("Value must be non-negative."); // Informational exception
+    }
+}
+10. Throw the most specific exception possible
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void OpenFile(string filePath)
+{
+    if (!File.Exists(filePath))
+    {
+        throw new FileNotFoundException("File not found.", filePath); // Specific exception
+    }
+}
+11. Do not silently ignore exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process()
+{
+    try
+    {
+        // Some code that may throw an exception
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("An error occurred: " + ex.Message); // Do not ignore
+        throw; // Rethrow the exception
+    }
+}
+12. Throw exceptions rather than returning some kind of status value
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process(int value)
+{
+    if (value < 0)
+    {
+        throw new ArgumentException("Value must be non-negative."); // Throw exception
+    }
+    // Process the value
+}
+13. Avoid side-effects when throwing recoverable exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process(int value)
+{
+    try
+    {
+        if (value < 0)
+        {
+            throw new ArgumentException("Value must be non-negative."); // Recoverable exception
+        }
+        // Process the value
+    }
+    catch (ArgumentException ex)
+    {
+        Console.WriteLine("Error: " + ex.Message); // Handle the exception
+    }
+}
+14. Delegates and events: Do not make assumptions on the object's state after raising an event
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public event EventHandler MyEvent;
+
+    public void RaiseEvent()
+    {
+        MyEvent?.Invoke(this, EventArgs.Empty); // Raise the event
+        // Do not assume the object's state here
+    }
+}
+15. Delegates and events: Always document from which thread an event handler is called
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    /// <summary>
+    /// Occurs when the operation is completed.
+    /// </summary>
+    /// <remarks>
+    /// This event is raised on the UI thread.
+    /// </remarks>
+    public event EventHandler OperationCompleted;
+}
+16. Delegates and events: Use delegate inference instead of explicit delegate instantiation when possible
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public event EventHandler MyEvent;
+
+    public void Subscribe()
+    {
+        MyEvent += OnMyEvent; // Delegate inference
+    }
+
+    private void OnMyEvent(object sender, EventArgs e)
+    {
+        Console.WriteLine("Event handler called.");
+    }
+}
+17. Delegates and events: Each subscribe must have a corresponding unsubscribe
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public event EventHandler MyEvent;
+
+    public void Subscribe()
+    {
+        MyEvent += OnMyEvent; // Subscribe
+    }
+
+    public void Unsubscribe()
+    {
+        MyEvent -= OnMyEvent; // Unsubscribe
+    }
+
+    private void OnMyEvent(object sender, EventArgs e)
+    {
+        Console.WriteLine("Event handler called.");
+    }
+}
+18. Delegates and events: Use generic event handler instances
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass<T>
+{
+    public event EventHandler<T> MyEvent;
+
+    public void Subscribe()
+    {
+        MyEvent += OnMyEvent; // Subscribe
+    }
+
+    private void OnMyEvent(object sender, T e)
+    {
+        Console.WriteLine("Event handler called.");
+    }
+}
+19. Delegates and events: Prevent passing null values for sender/object to event handler (for instance-based events)
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public event EventHandler MyEvent;
+
+    public void RaiseEvent()
+    {
+        MyEvent?.Invoke(this, EventArgs.Empty); // Pass 'this' as the sender
+    }
+}
+20. Delegates and events: Always check an event handler delegate for null
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public event EventHandler MyEvent;
+
+    public void RaiseEvent()
+    {
+        MyEvent?.Invoke(this, EventArgs.Empty); // Check for null
+    }
+}
+21. Delegates and events: Do not use return values of callbacks in events
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public event Func<int, int> MyEvent;
+
+    public void RaiseEvent()
+    {
+        MyEvent?.Invoke(42); // Do not use the return value
+    }
+}
+22. Data types: Use the [Flags] attribute on an enum if a bitwise operation is to be performed on the numeric values
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+[Flags]
+public enum Colors
+{
+    None = 0,
+    Red = 1,
+    Green = 2,
+    Blue = 4
+}
+23. Data types: Do not use 'magic numbers'
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public const int MaxAttempts = 5; // Named constant instead of magic number
+
+public void Process()
+{
+    for (int i = 0; i < MaxAttempts; i++)
+    {
+        // Some code
+    }
+}
+24. Data types: Floating point values shall not be compared using the == nor the != operators nor the Equals method.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void CompareFloats(float a, float b)
+{
+    if (Math.Abs(a - b) < float.Epsilon) // Compare with a tolerance
+    {
+        Console.WriteLine("The floats are equal.");
+    }
+    else
+    {
+        Console.WriteLine("The floats are not equal.");
+    }
+}
+25. Data types: Only implement casts that operate on the complete object
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public int Value { get; set ; }
+
+    public static explicit operator int(MyClass obj)
+    {
+        return obj.Value; // Cast the complete object
+    }
+}
+26. Data types: Do not generate a semantically different value with a cast
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class MyClass
+{
+    public int Value { get; set; }
+
+    public static explicit operator int(MyClass obj)
+    {
+        return obj.Value; // Do not change the value
+    }
+}
+27. Data types: When using composite formatting, do supply all objects referenced in the format string
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void FormatString()
+{
+    string name = "John";
+    int age = 30;
+    Console.WriteLine("My name is {0} and I am {1} years old.", name, age); // Supply all objects
+}
+28. Data types: When using composite formatting, do not supply any object unless it is referenced in the format string
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void FormatString()
+{
+    string name = "John";
+    Console.WriteLine("My name is {0}.", name); // Only supply referenced objects
+}
+29. Coding style: Write unary, increment, decrement, function call, subscript, and access operators together with their operands; insert spaces around all other operators
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Calculate()
+{
+    int x = 5;
+    int y = x + 2; // Spaces around operators
+    int z = x++; // Unary operator with operand
+}
+30. Coding style: Use spaces instead of tabs
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Calculate()
+{
+    int x = 5; // Spaces instead of tabs
+    int y = x + 2;
+    int z = x++;
+}
+31. Performance: Avoid boxing and unboxing of value types
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void Process()
+{
+    int value = 42;
+    object obj = value; // Boxing
+    int unboxedValue = (int)obj; // Unboxing
+}
+32. Performance: Do not use ToLower/ToUpper for case insensitive string comparison
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void CompareStrings(string a, string b)
+{
+    if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase)) // Case insensitive comparison
+    {
+        Console.WriteLine("The strings are equal.");
+    }
+    else
+    {
+        Console.WriteLine("The strings are not equal.");
+    }
+}
+33. Performance: Consider using Any() to determine whether an IEnumerable is empty
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void CheckEmptyIEnumerable(IEnumerable<int> collection)
+{
+    if (!collection.Any()) // Using Any() to check for emptiness
+    {
+        Console.WriteLine("The collection is empty.");
+    }
+    else
+    {
+        Console.WriteLine("The collection is not empty.");
+    }
+}
+34. Performance: Test for empty strings using string length or String.IsNullOrEmpty
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void CheckEmptyString(string str)
+{
+    if (str.Length == 0 || string.IsNullOrEmpty(str)) // Checking for empty string
+    {
+        Console.WriteLine("The string is empty.");
+    }
+    else
+    {
+        Console.WriteLine("The string is not empty.");
+    }
+}
+35. Performance: Use the evaluation order of && (and operator) and || (or operator) to increase performance
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void EvaluateConditions(bool a, bool b)
+{
+    if (a && b) // Evaluation order of &&
+    {
+        Console.WriteLine("Both conditions are true.");
+    }
+    else
+    {
+        Console.WriteLine("At least one condition is false.");
+    }
+}
+36. Performance: Use List<> instead of ArrayList especially for value types
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void CreateList()
+{
+    List<int> list = new List<int>(); // Using List<> instead of ArrayList
+    list.Add(42);
+}
