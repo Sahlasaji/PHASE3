@@ -1,0 +1,1295 @@
+ Do not mix code from different providers in one file
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+// File: MyNamespace.Person.cs
+namespace MyNamespace
+{
+    public class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
+}
+
+// File: MyNamespace.Animal.cs
+namespace MyNamespace
+{
+    public class Animal
+    {
+        public string Species { get; set; }
+    }
+}
+2. Do not suppress compiler warnings in the code
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+// No suppressed warnings in this code
+public class Example
+{
+    public void DoSomething()
+    {
+        // Intentionally left empty
+    }
+}
+3. Name namespaces according to a well-defined pattern
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+namespace CompanyName.ProjectName.ModuleName
+{
+    public class MyClass
+    {
+        // Class implementation
+    }
+}
+4. Do not use letters that can be mistaken for digits, and vice versa
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    private const int MaxCount = 10; // Avoid using 'O' or 'l' in identifiers
+}
+5. Name DLL assemblies after their containing namespace
+xml
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+<!-- In the .csproj file -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MyNamespace</AssemblyName>
+  </PropertyGroup>
+</Project>
+6. Name the source file to the main class
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+// File: Person.cs
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+7. Each file shall contain a header block
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+// File: Person.cs
+// Description: This file contains the Person class.
+// Author: Your Name
+// Date: YYYY-MM-DD
+
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+8. All comments shall be written in English
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    // This method does something important
+    public void DoSomething()
+    {
+        // Implementation goes here
+    }
+}
+9. Use XML tags for documenting types and members
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+/// <summary>
+/// Represents a person with a name and age.
+/// </summary>
+public class Person
+{
+    /// <summary>
+    /// Gets or sets the name of the person.
+    /// </summary>
+    public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the age of the person.
+    /// </summary>
+    public int Age { get; set; }
+}
+10. Don't comment out code
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void DoSomething()
+    {
+        // Implementation goes here
+    }
+
+    // The following code is not commented out
+    // public void OldMethod() { }
+}
+11. Declare and initialize variables close to where they are used
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void DoSomething()
+    {
+        int count = 0; // Declared and initialized close to usage
+        count++;
+    }
+}
+12. If possible, initialize variables at the point of declaration
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    private int count = 0; // Initialized at the point of declaration
+
+    public void Increment()
+    {
+        count++;
+    }
+}
+13. Use a public static readonly field to define predefined object instances
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Constants
+{
+    public static readonly int MaxValue = 100; // Predefined constant
+}
+14. Set a reference field to null to tell the garbage collector that the object is no longer needed
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    private object myObject;
+
+    public void Dispose()
+    {
+        myObject = null; // Set to null to help garbage collection
+    }
+}
+15. Do not re-declare a visible name in a nested scope
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        int count = 0; // Outer scope
+
+        if (true)
+        {
+            // Avoid re-declaring 'count' here
+            count++;
+        }
+    }
+}
+16. Avoid implementing a finalizer
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    // No finalizer implemented
+}
+17. Implement IDisposable if a class uses unmanaged resources, owns disposable objects, or subscribes to other objects
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class ResourceHolder : IDisposable
+{
+    private bool disposed = false;
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources
+            }
+
+            // Dispose unmanaged resources
+            disposed = true;
+        }
+    }
+}
+18. Do not access any reference type members in the finalizer
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    // No finalizer implemented
+}
+19. Always document when a member returns a copy of a reference type or array
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+/// <summary>
+/// Returns a copy of the internal array.
+/// </summary>
+public int[] GetArrayCopy()
+{
+    return (int[])internalArray.Clone();
+}
+20. Properties, methods, and arguments representing strings or collections should never be null
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public string Name { get; set; }
+
+    public void Method(string argument)
+    {
+        if (argument == null)
+        {
+            throw new ArgumentNullException(nameof(argument));
+        }
+    }
+}
+21. A virtual method may only be called if an object is fully constructed
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class BaseClass
+{
+    public virtual void Initialize()
+    {
+        // Virtual method implementation
+    }
+}
+
+public class DerivedClass : BaseClass
+{
+    public override void Initialize()
+    {
+        base.Initialize(); // Call virtual method after construction
+    }
+}
+22. Return interfaces to unchangeable collections
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public IReadOnlyList<int> GetNumbers()
+    {
+        return new ReadOnlyCollection<int>(new List<int> { 1, 2, 3 });
+    }
+}
+23. Don't use "using" variables outside the scope of the "using" statement
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        using (var resource = new Resource())
+        {
+            // Use 'resource' within this scope
+        }
+
+        // Avoid using 'resource' here
+    }
+}
+24. Do not change a loop variable inside a for loop block
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            // Avoid modifying 'i' here
+        }
+    }
+}
+25. Update loop variables close to where the loop condition is specified
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        int i = 0;
+        while (i < 10)
+        {
+            // Update 'i' close to the loop condition
+            i++;
+        }
+    }
+}
+26. Ensure switch statements are exhaustive
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(EnumType value)
+    {
+        switch (value)
+        {
+            case EnumType.Value1:
+                // Handle Value1
+                break;
+            case EnumType.Value2:
+                // Handle Value2
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(value), value, null);
+        }
+    }
+}
+27. Don't return a function at an unexpected location
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public int Method()
+    {
+        // Avoid returning in the middle of the method
+        if (true)
+        {
+            return 0; // Unexpected return
+        }
+
+        // Instead, return at the end of the method
+        return 1;
+    }
+}
+28. Do not make explicit comparisons to true or false
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(bool condition)
+    {
+        if (condition) // Avoid if (condition == true)
+        {
+            // Implementation
+        }
+    }
+}
+29. Do not access a modified object more than once in an expression
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        List<int> list = new List<int>();
+        list.Add(1);
+        list.Add(2);
+
+        // Avoid accessing 'list' multiple times in an expression
+        int count = list.Count;
+        Console.WriteLine(count);
+    }
+}
+30. Avoid locking on a public type
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    private readonly object lockObject = new object();
+
+    public void Method()
+    {
+        lock (lockObject) // Lock on a private object
+        {
+            // Implementation
+        }
+    }
+}
+31. Avoid conditions with double negatives
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(bool condition)
+    {
+        if (!condition) // Avoid if (!(condition == true))
+        {
+            // Implementation
+        }
+    }
+}
+32. Don't use parameters as temporary variables
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(int parameter)
+    {
+        int localVariable = parameter; // Use a local variable instead
+        // Implementation
+    }
+}
+33. Do not dereference null
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(object obj)
+    {
+        if (obj != null)
+        {
+            // Dereference 'obj' only if it's not null
+            obj.ToString();
+        }
+    }
+}
+34. The cyclomatic complexity of a method should not exceed its configured maximum
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        // Keep the method simple and avoid complex logic
+    }
+}
+35. Declare all fields (data members) private
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    private int field; // Declare fields as private
+}
+36. Prevent instantiation of a class if it contains only static members
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public static class StaticClass
+{
+    public static void Method()
+    {
+        // Implementation
+    }
+}
+37. Explicitly define a protected constructor on an abstract base class
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public abstract class AbstractBaseClass
+{
+    protected AbstractBaseClass() { } // Protected constructor
+}
+38. Make all types internal by default
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+internal class InternalClass
+{
+    // Implementation
+}
+39. Limit the contents of a source code file to one type
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+// File: MyClass.cs
+public class MyClass
+{
+    // Implementation
+}
+40. Use using statements instead of fully qualified type names
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+using System.Collections.Generic;
+
+public class Example
+{
+    public void Method()
+    {
+        List<int> list = new List<int>(); // Use 'List<int>' instead of 'System.Collections.Generic.List<int>'
+    }
+}
+41. Selection statements (if-else and switch) should be used when the control flow depends on an object's value; dynamic binding should be used when the control flow depends on the object's type
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(object obj)
+    {
+        if (obj is string)
+        {
+            // Implementation for string type
+        }
+        else if (obj is int)
+        {
+            // Implementation for int type
+        }
+    }
+}
+42. All variants of an overloaded method shall be used for the same purpose and have similar behavior
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(int parameter)
+    {
+        // Implementation for int parameter
+    }
+
+    public void Method(string parameter)
+    {
+        // Implementation for string parameter
+    }
+}
+43. If you must provide the ability to override a method, make only the most complete overload virtual and define the other operations in terms of it
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public abstract class AbstractBaseClass
+{
+    public abstract void Method(int parameter); // Virtual method
+
+    public void Method(string parameter)
+    {
+        Method(int.Parse(parameter)); // Define in terms of the virtual method
+    }
+}
+44. It shall be possible to use a reference to an object of a derived class wherever a reference to that object's base class object is used
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class BaseClass { }
+
+public class DerivedClass : BaseClass { }
+
+public class Example
+{
+    public void Method(BaseClass obj)
+    {
+        // Can pass a DerivedClass object as a BaseClass reference
+        Method(new DerivedClass());
+    }
+}
+45. Don't hide inherited members with the new keyword
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class BaseClass
+{
+    public virtual void Method()
+    {
+        // Implementation
+    }
+}
+
+public class DerivedClass : BaseClass
+{
+    public override void Method()
+    {
+        // Override the base class method
+    }
+}
+46. Do not overload any 'modifying' operators on a class type
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    // Avoid overloading modifying operators like +=, -=, \*=, /=, %=, etc.
+}
+47. Do not modify the value of any of the operands in the implementation of an overloaded operator
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public static Example operator +(Example obj1, Example obj2)
+    {
+        // Avoid modifying 'obj1' or 'obj2' in the implementation
+        return new Example(); // Return a new object instead
+    }
+}
+48. If you implement one of operator==(), the Equals method or GetHashCode(), implement all three
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public override bool Equals(object obj)
+    {
+        // Implementation
+    }
+
+    public override int GetHashCode()
+    {
+        // Implementation
+    }
+
+    public static bool operator ==(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator !=(Example obj1, Example obj2)
+    {
+        return !(obj1 == obj2);
+    }
+}
+49. Override the GetHashCode method whenever you override the Equals method
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public override bool Equals(object obj)
+    {
+        // Implementation
+    }
+
+    public override int GetHashCode()
+    {
+        // Implementation
+    }
+}
+50. Override the Equals method whenever you implement the == operator, and make them do the same thing
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public override bool Equals(object obj)
+    {
+        // Implementation
+    }
+
+    public static bool operator ==(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+}
+51. Implement operator overloading for the equality (==), not equal (!=), less than (<), and greater than (>) operators when you implement IComparable
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example : IComparable<Example>
+{
+    public int CompareTo(Example other)
+    {
+        // Implementation
+    }
+
+    public static bool operator ==(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator !=(Example obj1, Example obj2)
+    {
+        return !(obj1 == obj2);
+    }
+
+    public static bool operator <(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator >(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+}
+52. Overload the equality operator (==), when you overload the addition (+) operator and/or subtraction (-) operator
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public static Example operator +(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static Example operator -(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator ==(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+}
+53. Implement all relational operators (<, <=, >, >=) if you implement any
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public static bool operator <(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator <=(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator >(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+
+    public static bool operator >=(Example obj1, Example obj2)
+    {
+        // Implementation
+    }
+}
+54. Do NOT use the Equals method to compare different value types, but use the equality operators instead
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(int value1, int value2)
+    {
+        if (value1 == value2) // Use the equality operator
+        {
+            // Implementation
+        }
+    }
+}
+55. Allow properties to be set in any order
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public int Property1 { get; set; }
+    public int Property2 { get; set; }
+
+    public void Method()
+    {
+        Example obj = new Example();
+        obj.Property2 = 2; // Set properties in any order
+        obj.Property1 = 1;
+    }
+}
+56. Use a property rather than a method when the member is a logical data member
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public int DataMember { get; set; } // Use a property
+}
+57. Use a method rather than a property when this is more appropriate
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void DoSomething() // Use a method
+    {
+        // Implementation
+    }
+}
+58. Do not create a constructor that does not yield a fully initialized object
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public Example(int parameter)
+    {
+        // Initialize the object fully
+    }
+}
+59. Use pattern matching instead of the "as" keyword
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(object obj)
+    {
+        if (obj is string str)
+        {
+            // Implementation
+        }
+    }
+}
+60. Use the correct way of casting
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method(object obj)
+    {
+        string str = (string)obj; // Use a direct cast
+    }
+}
+61. Use generic constraints if applicable
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example<T> where T : class
+{
+    // Implementation
+}
+62. Do not ignore method results
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+ {
+    public void Method()
+    {
+        int result = DoSomething(); // Do not ignore the method result
+        // Implementation
+    }
+
+    private int DoSomething()
+    {
+        // Implementation
+    }
+}
+63. Throw exceptions from unexpected locations
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        if (true)
+        {
+            throw new Exception("Unexpected error"); // Throw an exception
+        }
+    }
+}
+64. Document the exceptions that are explicitly thrown by a method or a property
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+/// <summary>
+/// Does something.
+/// </summary>
+/// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
+public void Method()
+{
+    throw new Exception("Unexpected error");
+}
+65. Always log that an exception is thrown
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        try
+        {
+            // Implementation
+        }
+        catch (Exception ex)
+        {
+            LogException(ex); // Log the exception
+            throw;
+        }
+    }
+
+    private void LogException(Exception ex)
+    {
+        // Implementation
+    }
+}
+66. Throw informational exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        throw new InvalidOperationException("Operation is not valid"); // Throw an informational exception
+    }
+}
+67. Throw the most specific exception possible
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        throw new ArgumentNullException(nameof(parameter), "Parameter cannot be null"); // Throw a specific exception
+    }
+}
+68. Do not silently ignore exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        try
+        {
+            // Implementation
+        }
+        catch (Exception ex)
+        {
+            // Do not silently ignore the exception
+            LogException(ex);
+            throw;
+        }
+    }
+
+    private void LogException(Exception ex)
+    {
+        // Implementation
+    }
+}
+69. Throw exceptions rather than returning some kind of status value
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        if (true)
+        {
+            throw new Exception("An error occurred"); // Throw an exception
+        }
+    }
+}
+70. Avoid side-effects when throwing recoverable exceptions
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class Example
+{
+    public void Method()
+    {
+        try
+        {
+            // Implementation
+        }
+        catch (Exception ex)
+        {
+            // Avoid side-effects when throwing recoverable exceptions
+            throw new RecoverableException("Recoverable error", ex);
+        }
+    }
+}
