@@ -115,35 +115,35 @@ namespace PatientApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        //private PatientViewModel _viewModel;
+        private PatientViewModel _viewModel;
         public MainWindow()
         {
             InitializeComponent();
-            //_viewModel = new PatientViewModel();
-            //LoadInitialView();
+            _viewModel = new PatientViewModel();
+            LoadInitialView();
         }
-        //private void LoadInitialView()
-        //{
-        //    var registerControl = new PatientRegControl(_viewModel);
-        //    registerControl.NavigateToAppointment += RegisterControl_NavigateToAppointment;
-        //    MainContent.Content = registerControl;
-        //}
-        //private void RegisterControl_NavigateToAppointment()
-        //{
-        //    var appointmentControl = new AppointmentConfirmationControl(_viewModel);
-        //    appointmentControl.NavigateToDashboard += AppointmentControl_NavigateToDashboard;
-        //    MainContent.Content = appointmentControl;
-        //}
+        private void LoadInitialView()
+        {
+            var registerControl = new PatientRegControl(_viewModel);
+            registerControl.NavigateToAppointment += RegisterControl_NavigateToAppointment;
+            MainContent.Content = registerControl;
+        }
+        private void RegisterControl_NavigateToAppointment()
+        {
+            var appointmentControl = new AppointmentConfirmationControl(_viewModel);
+            appointmentControl.NavigateToDashboard += AppointmentControl_NavigateToDashboard;
+            MainContent.Content = appointmentControl;
+        }
 
-        //private void AppointmentControl_NavigateToDashboard()
-        //{
-        //    var dashboardControl = new PatientDashboardControl(_viewModel);
-        //    MainContent.Content = dashboardControl;
-        //}
+        private void AppointmentControl_NavigateToDashboard()
+        {
+            var dashboardControl = new PatientDashboardControl(_viewModel);
+           MainContent.Content = dashboardControl;
+        }
 
         private void btnRegistration_Click(object sender, RoutedEventArgs e)
         {
-            var patientRegControl = new PatientRegControl();
+            var patientRegControl = new PatientRegControl(_viewModel);
             var mainWindow  = Window.GetWindow(this) as MainWindow;
             if(mainWindow != null)
             {
@@ -153,7 +153,7 @@ namespace PatientApp
 
         private void btnAppointment_Click(object sender, RoutedEventArgs e)
         {
-            var appointmentConfirmationControl = new AppointmentConfirmationControl();
+            var appointmentConfirmationControl = new AppointmentConfirmationControl(_viewModel);
             var mainWindow = Window.GetWindow(this) as MainWindow;
             if (mainWindow != null)
             {
@@ -163,7 +163,7 @@ namespace PatientApp
 
         private void btnDashboard_Click(object sender, RoutedEventArgs e)
         {
-            var patientDashboardControl = new PatientDashboardControl();
+            var patientDashboardControl = new PatientDashboardControl(_viewModel);
             var mainWindow = Window.GetWindow(this) as MainWindow;
             if (mainWindow != null)
             {
@@ -239,10 +239,7 @@ namespace PatientApp
     {
         private PatientViewModel _viewModel;
         public event Action NavigateToAppointment;
-        public PatientRegControl()
-        {
-            InitializeComponent();
-        }
+       
         public PatientRegControl(PatientViewModel viewModel)
         {
             InitializeComponent();
@@ -324,15 +321,11 @@ namespace PatientApp
     {
         private PatientViewModel _viewModel;
         public event Action NavigateToDashboard;
-        public AppointmentConfirmationControl()
-        {
-            InitializeComponent();
-           
-        }
+       
         
         public AppointmentConfirmationControl(PatientViewModel viewModel)
         {
-            //InitializeComponent();
+            InitializeComponent();
             _viewModel = viewModel;
             LoadPatients();
         }
@@ -412,13 +405,10 @@ namespace PatientApp
     public partial class PatientDashboardControl : UserControl
     {
         private PatientViewModel _viewModel;
-        public PatientDashboardControl()
-        {
-            InitializeComponent();
-        }
+        
         public PatientDashboardControl(PatientViewModel viewModel)
         {
-            //InitializeComponent();
+            InitializeComponent();
             _viewModel = viewModel;
             DataContext = _viewModel;
         }
