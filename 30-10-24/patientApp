@@ -1,3 +1,5 @@
+Patient.cs
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace PatientApp
 }
 
 
-
+IPatient
 
 using System;
 using System.Collections.Generic;
@@ -38,6 +40,7 @@ namespace PatientApp
 }
 
 
+PatientViewModel.cs
 
 using System;
 using System.Collections.Generic;
@@ -52,6 +55,7 @@ namespace PatientApp
     {
         public ObservableCollection<Patient> Patients { get; private set; }
         public ObservableCollection<Patient> ConfirmedPatients { get; private set; }
+        
 
         public PatientViewModel()
         {
@@ -80,6 +84,7 @@ namespace PatientApp
 
 
 
+MainWindow.xaml
 
 
 <Window x:Class="PatientApp.MainWindow"
@@ -101,8 +106,7 @@ namespace PatientApp
 </Window>
 
 
-
-
+MainWindow.xaml.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -193,6 +197,7 @@ namespace PatientApp
 
 
 
+PatientRegControl.xaml
 
 
 <UserControl x:Class="PatientApp.PatientRegControl"
@@ -230,7 +235,7 @@ namespace PatientApp
 </UserControl>
 
 
-
+PatientRegControl.xaml.cs
 
 
 using System;
@@ -291,6 +296,7 @@ namespace PatientApp
 
 
 
+AppointmentConfirmationControl
 
 
 
@@ -316,7 +322,7 @@ namespace PatientApp
 
 
 
-
+AppointmentConfirmationControl.xaml.cs
 
 using System;
 using System.Collections.Generic;
@@ -367,15 +373,27 @@ namespace PatientApp
         private void btnConfirm_Click(object sender, RoutedEventArgs e)
         {
             var selectedPatients = new List<Patient>();
-
-            // Iterate through the CheckBoxes in the ListBox to find checked ones
-            foreach (CheckBox checkBox in PatientsListBox.Items)
+            for (int i= PatientsListBox.Items.Count-1; i >= 0; i--)
             {
-                if (checkBox.IsChecked == true && checkBox.Tag is Patient patient)
+                CheckBox checkBox = PatientsListBox.Items[i] as CheckBox;
+                if ( checkBox != null && checkBox.IsChecked == true && checkBox.Tag is Patient patient)
                 {
                     selectedPatients.Add(patient);
+                    PatientsListBox.Items.RemoveAt(i);
                 }
             }
+            foreach (var confirmedPatient in selectedPatients)
+            {
+                _viewModel.Patients.Remove(confirmedPatient);
+            }
+            // Iterate through the CheckBoxes in the ListBox to find checked ones
+            //foreach (CheckBox checkBox in PatientsListBox.Items)
+            //{
+            //    if (checkBox.IsChecked == true && checkBox.Tag is Patient patient)
+            //    {
+            //        selectedPatients.Add(patient);
+            //    }
+            //}
             _viewModel.ConfirmPatients(selectedPatients);
             MessageBox.Show(messageBoxText: "Are you sure to Confirm?",
                     caption: "Confirm",
@@ -393,6 +411,9 @@ namespace PatientApp
 
 
 
+PatientDashBoardControl.xaml
+
+
 
 <UserControl x:Class="PatientApp.PatientDashboardControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -407,6 +428,10 @@ namespace PatientApp
         <DataGrid ItemsSource="{Binding Patients}" AutoGenerateColumns="True"/>
     </StackPanel>
 </UserControl>
+
+
+
+PatientDashBoardControl.xaml.cs
 
 using System;
 using System.Collections.Generic;
@@ -438,7 +463,10 @@ namespace PatientApp
             _viewModel = viewModel;
             DataContext = _viewModel;
             grdPatients.ItemsSource = _viewModel.ConfirmedPatients;
+
+
         }
     }
 }
+
 
