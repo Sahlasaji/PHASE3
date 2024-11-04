@@ -1,118 +1,31 @@
-using System.Windows;
-
-namespace PatientAdmissionApp
+public class PatientViewModel : IPatient
 {
-    public partial class MainWindow : Window
+    public event EventHandler<Patient> OnPatientRegistered;
+    public event EventHandler OnConfirmAppointment;
+    public event EventHandler OnNavigateToDashboard;
+
+    public ObservableCollection<Patient> Patients { get; private set; }
+    public ObservableCollection<Patient> ConfirmedPatients { get; private set; }
+
+    public PatientViewModel()
     {
-        private readonly PatientViewModel _viewModel;
-
-        public MainWindow()
-        {
-            InitializeComponent();
-            _viewModel = new PatientViewModel();
-            this.DataContext = _viewModel;
-
-            // Subscribe to events from the ViewModel
-            _viewModel.ShowRegistrationRequested += OnShowRegistrationRequested;
-            _viewModel.AppointmentUpdated += OnAppointmentUpdated;
-        }
-
-        private void btnRegistration_Click(object sender, RoutedEventArgs e)
-        {
-            // Request to show the registration control
-            _viewModel.RequestShowRegistration(null);
-        }
-
-        private void btnAppointment_Click(object sender, RoutedEventArgs e)
-        {
-            var appointmentControl = new AppointmentControl();
-            MainContent.Content = appointmentControl;
-        }
-
-        private void btnDashboard_Click(object sender, RoutedEventArgs e)
-        {
-            var patientDashboardControl = new PatientDashboardControl();
-            MainContent.Content = patientDashboardControl;
-        }
-
-        private void OnShowRegistrationRequested(object sender, System.EventArgs e)
-        {
-            var registrationControl = new PatientRegistrationControl();
-            MainContent.Content = registrationControl;
-        }
-
-        private void OnAppointmentUpdated(object sender, System.EventArgs e)
-        {
-            MessageBox.Show("An appointment has been updated.");
-        }
-
-        private void Window_Closed(object sender, System.EventArgs e)
-        {
-            // Clean up subscriptions
-            _viewModel.ShowRegistrationRequested -= OnShowRegistrationRequested;
-            _viewModel.AppointmentUpdated -= OnAppointmentUpdated;
-
-            Application.Current.Shutdown();
-        }
+        Patients = new ObservableCollection<Patient>();
+        ConfirmedPatients = new ObservableCollection<Patient>();
     }
-}
 
-
-using System.Windows;
-
-namespace PatientAdmissionApp
-{
-    public partial class MainWindow : Window
+    public void RegisterPatient(Patient patient)
     {
-        private readonly PatientViewModel _viewModel;
+        Patients.Add(patient);
+        OnPatientRegistered?.Invoke(this, patient);
+    }
 
-        public MainWindow()
-        {
-            InitializeComponent();
-            _viewModel = new PatientViewModel();
-            this.DataContext = _viewModel;
+    public void ConfirmPatients()
+    {
+        OnConfirmAppointment?.Invoke(this, EventArgs.Empty);
+    }
 
-            // Subscribe to events from the ViewModel
-            _viewModel.ShowRegistrationRequested += OnShowRegistrationRequested;
-            _viewModel.AppointmentUpdated += OnAppointmentUpdated;
-        }
-
-        private void btnRegistration_Click(object sender, RoutedEventArgs e)
-        {
-            // Request to show the registration control
-            _viewModel.RequestShowRegistration(null);
-        }
-
-        private void btnAppointment_Click(object sender, RoutedEventArgs e)
-        {
-            var appointmentControl = new AppointmentControl();
-            MainContent.Content = appointmentControl;
-        }
-
-        private void btnDashboard_Click(object sender, RoutedEventArgs e)
-        {
-            var patientDashboardControl = new PatientDashboardControl();
-            MainContent.Content = patientDashboardControl;
-        }
-
-        private void OnShowRegistrationRequested(object sender, System.EventArgs e)
-        {
-            var registrationControl = new PatientRegistrationControl();
-            MainContent.Content = registrationControl;
-        }
-
-        private void OnAppointmentUpdated(object sender, System.EventArgs e)
-        {
-            MessageBox.Show("An appointment has been updated.");
-        }
-
-        private void Window_Closed(object sender, System.EventArgs e)
-        {
-            // Clean up subscriptions
-            _viewModel.ShowRegistrationRequested -= OnShowRegistrationRequested;
-            _viewModel.AppointmentUpdated -= OnAppointmentUpdated;
-
-            Application.Current.Shutdown();
-        }
+    public void NavigateToDashboard()
+    {
+        OnNavigateToDashboard?.Invoke(this, EventArgs.Empty);
     }
 }
