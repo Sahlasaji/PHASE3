@@ -1,31 +1,34 @@
-public class PatientViewModel : IPatient
-{
-    public event EventHandler<Patient> OnPatientRegistered;
-    public event EventHandler OnConfirmAppointment;
-    public event EventHandler OnNavigateToDashboard;
+<UserControl x:Class="PatientApp.PatientRegControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PatientApp"
+             mc:Ignorable="d" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Canvas Width="400" Height="450">
+        <TextBlock Text="Name" Canvas.Left="10" Canvas.Top="10"/>
+        <TextBox x:Name="NameTextBox" Width="200" Canvas.Left="10" Canvas.Top="30"/>
 
-    public ObservableCollection<Patient> Patients { get; private set; }
-    public ObservableCollection<Patient> ConfirmedPatients { get; private set; }
+        <TextBlock Text="Age" Canvas.Left="10" Canvas.Top="70"/>
+        <TextBox x:Name="AgeTextBox" Width="200" Canvas.Left="10" Canvas.Top="90"/>
 
-    public PatientViewModel()
-    {
-        Patients = new ObservableCollection<Patient>();
-        ConfirmedPatients = new ObservableCollection<Patient>();
-    }
+        <TextBlock Text="Date of Birth" Canvas.Left="10" Canvas.Top="130"/>
+        <DatePicker x:Name="DOBPicker"  SelectedDateFormat="Short" DisplayDateEnd="{x:Static sys:DateTime.Now}" Canvas.Left="10" Canvas.Top="331"/>
 
-    public void RegisterPatient(Patient patient)
-    {
-        Patients.Add(patient);
-        OnPatientRegistered?.Invoke(this, patient);
-    }
+        <TextBlock Text="Address" Canvas.Left="10" Canvas.Top="190"/>
+        <TextBox x:Name="AddressTextBox" Width="200" Canvas.Left="10" Canvas.Top="210"/>
 
-    public void ConfirmPatients()
-    {
-        OnConfirmAppointment?.Invoke(this, EventArgs.Empty);
-    }
+        <TextBlock Text="Slot" Canvas.Left="10" Canvas.Top="250"/>
+        <ComboBox x:Name="SlotComboBox" Width="200" Canvas.Left="10" Canvas.Top="270">
+            <ComboBoxItem Content="Morning"/>
+            <ComboBoxItem Content="Evening"/>
+        </ComboBox>
 
-    public void NavigateToDashboard()
-    {
-        OnNavigateToDashboard?.Invoke(this, EventArgs.Empty);
-    }
-}
+        <TextBlock Text="Booking Date" Canvas.Left="10" Canvas.Top="310"/>
+        <DatePicker x:Name="BookingDatePicker" SelectedDateFormat="Short"  DisplayDateStart="{x:Static sys:DateTime.Now}" Canvas.Left="10" Canvas.Top="151" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+        <Button x:Name="btnRegister" Content="Register" Width="100" Canvas.Left="10" Canvas.Top="380" Click="btnRegister_Click"/>
+    </Canvas>
+</UserControl>
