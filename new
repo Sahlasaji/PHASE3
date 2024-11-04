@@ -9,6 +9,11 @@ namespace PatientAdmissionApp
     {
         public event EventHandler ShowRegistrationRequested;
         public event EventHandler AppointmentUpdated;
+        public event EventHandler RegisterPatientRequested;
+        public event EventHandler ConfirmAppointmentRequested;
+        public event EventHandler CancelAppointmentRequested;
+
+
         public ObservableCollection<PatientModel> Patients { get; set; } = new ObservableCollection<PatientModel>();
         public ObservableCollection<PatientModel> ConfirmedPatients { get; set; } = new ObservableCollection<PatientModel>();
 
@@ -18,22 +23,14 @@ namespace PatientAdmissionApp
             get { return _newPatient; }
             set { _newPatient = value; OnPropertyChanged(); }
         }
-
-        public ICommand RegisterPatientCommand { get; set; }
-        public ICommand ConfirmAppointmentCommand { get; set; }
-        public ICommand CancelAppointmentCommand { get; set; }
-        public ICommand RequestShowRegistrationCommand { get; set; }
-
-
-
         public PatientViewModel()
         {
             NewPatient = new PatientModel();
-            RegisterPatientCommand = new RelayCommand(RegisterPatient);
-            ConfirmAppointmentCommand = new RelayCommand(ConfirmAppointment);
-            CancelAppointmentCommand = new RelayCommand(CancelAppointment);
-            RequestShowRegistrationCommand = new RelayCommand(RequestShowRegistration);
+        }
 
+        private void RequestShowRegistration(object parameter)
+        {
+            ShowRegistrationRequested?.Invoke(this, EventArgs.Empty);
         }
 
         public void RegisterPatient(object parameter)
@@ -49,12 +46,13 @@ namespace PatientAdmissionApp
                
             });
             NewPatient = new PatientModel();
+            RegisterPatientRequested?.Invoke(this, EventArgs.Empty);
             MessageBox.Show("Registration Success!!!!");
         }
 
-        public void ConfirmAppointment(object parameter)
+        public void ConfirmAppointment(PatientModel patient)
         {
-            if (parameter is PatientModel patient)
+            if (patient != null)
             {
                 // Move patient to ConfirmedPatients and remove from Patients
                 patient.ConfirmationStatus = "Confirmed";
@@ -63,31 +61,87 @@ namespace PatientAdmissionApp
                 ConfirmedPatients.Add(patient);
                 Patients.Remove(patient);
                 AppointmentUpdated?.Invoke(this,EventArgs.Empty);
+                ConfirmAppointmentRequested?.Invoke(this, EventArgs.Empty);
                 MessageBox.Show($"{patient.Name}'s appointment confirmed.");
             }
         }
 
-        public void CancelAppointment(object parameter)
+        public void CancelAppointment(PatientModel patient)
         {
-            if (parameter is PatientModel patient)
+            if (patient != null)
             {
                 // Remove patient from Patients
                 Patients.Remove(patient);
+                CancelAppointmentRequested?.Invoke(this, EventArgs.Empty);
                 MessageBox.Show($"{patient.Name}'s appointment has been canceled.");
             }
         }
-
-        private void RequestShowRegistration(object parameter)
-        {
-            ShowRegistrationRequested?.Invoke(this, EventArgs.Empty);
-        }
-
-
-        
     }
 }
 
 
 
 
-dont use ICommand,use EventHandler only
+using System.Windows;
+
+namespace PatientAdmissionApp
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+            this.DataContext = new PatientViewModel();
+
+        }
+
+        private void btnRegistration_Click(object sender, RoutedEventArgs e)
+        {
+
+
+            var confirmationControl = new PatientRegistrationControl();
+
+
+            var mainWindow = Window.GetWindow(this) as MainWindow;
+            if (mainWindow != null)
+            {
+                mainWindow.MainContent.Content = confirmationControl;
+            }
+
+        }
+
+        private void btnAppointment_Click(object sender, RoutedEventArgs e)
+        {
+            var appointmentControl = new AppointmentControl();
+            var appointmentWindow = Window.GetWindow(this) as MainWindow;
+
+            if (appointmentWindow != null)
+            {
+                appointmentWindow.MainContent.Content = appointmentControl;
+
+            }
+        }
+
+        private void btnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            var patientDashboardControl = new PatientDashboardControl();
+            var patientDashboard = Window.GetWindow(this) as MainWindow;
+
+            if (patientDashboard != null)
+            {
+                patientDashboard.MainContent.Content = patientDashboardControl;
+
+            }
+        }
+
+        private void Window_Closed(object sender, System.EventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+    }
+}
+
+modify mainwindow.xaml.cs based on the patientviewmodel
