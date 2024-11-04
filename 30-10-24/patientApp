@@ -53,6 +53,8 @@ namespace PatientApp
 {
     public class PatientViewModel : IPatient
     {
+        public event EventHandler<Patient> OnPatientRegistered;
+
         public ObservableCollection<Patient> Patients { get; private set; }
         public ObservableCollection<Patient> ConfirmedPatients { get; private set; }
         
@@ -70,7 +72,6 @@ namespace PatientApp
             OnPatientRegistered?.Invoke(this, patient);
         }
 
-        public event EventHandler<Patient> OnPatientRegistered;
         public void ConfirmPatients(List<Patient>selectedPatients)
         {
             ConfirmedPatients.Clear();
@@ -81,6 +82,7 @@ namespace PatientApp
         }
     }
 }
+
 
 
 
@@ -193,6 +195,7 @@ namespace PatientApp
         }
     }
 }
+
 
 
 
