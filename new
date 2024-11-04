@@ -1,36 +1,3 @@
-<UserControl x:Class="PatientAdmissionApp.PatientDashboardControl"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:PatientAdmissionApp"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Margin="20">
-        <StackPanel>
-            <TextBlock Text="Patient Dashboard" FontSize="22" FontWeight="Bold" Margin="0,0,0,20"/>
-
-            <!-- Patients DataGrid -->
-            <DataGrid ItemsSource="{Binding ConfirmedPatients}" AutoGenerateColumns="False" Height="150">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-                    <DataGridTextColumn Header="Age" Binding="{Binding Age}" />
-                    <DataGridTextColumn Header="Address" Binding="{Binding Address}" />
-                    <DataGridTextColumn Header="ConfirmationStatus" Binding="{Binding ConfirmationStatus}" />
-                    <DataGridTextColumn Header="AppointmentDate" Binding="{Binding AppointmentDate}" />
-                    
-                </DataGrid.Columns>
-            </DataGrid>
-
-            <!-- Medical Records DataGrid -->
-           
-
-            <!-- Action Buttons -->
-            
-            <Button Content="Filter Records"  Width="150" Margin="0,10"/>
-        </StackPanel>
-    </Grid>
-</UserControl>
 using System;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -73,6 +40,7 @@ namespace PatientAdmissionApp
                 Address = NewPatient.Address,
                 Slot = NewPatient.Slot,
                 BookingDate = NewPatient.BookingDate
+               
             });
             NewPatient = new PatientModel();
             MessageBox.Show("Registration Success!!!!");
@@ -83,6 +51,9 @@ namespace PatientAdmissionApp
             if (parameter is PatientModel patient)
             {
                 // Move patient to ConfirmedPatients and remove from Patients
+                patient.ConfirmationStatus = "Confirmed";
+               
+
                 ConfirmedPatients.Add(patient);
                 Patients.Remove(patient);
                 MessageBox.Show($"{patient.Name}'s appointment confirmed.");
@@ -109,4 +80,41 @@ namespace PatientAdmissionApp
 
 
 
-after patient details is confirmed from AppointmentControl,it must be displayed in dashboard with status confimrd and should display appointment date also
+<UserControl x:Class="PatientAdmissionApp.AppointmentControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PatientAdmissionApp" d:DataContext="{d:DesignInstance Type=local:PatientViewModel}"
+             mc:Ignorable="d" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="20">
+        <StackPanel>
+            <TextBlock Text="Appointment Confirmation" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+            <ListBox ItemsSource="{Binding Patients}" x:Name="PatientsListBox" Height="300">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Slot}" />
+                            <TextBlock Text="{Binding BookingDate, StringFormat='{}{0:MM/dd/yyyy}'}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <Button Content="Confirm" Width="75" Margin="5,0,5,0" 
+                                    Command="{Binding DataContext.ConfirmAppointmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                                <Button Content="Cancel" Width="75" Margin="5,0,5,0" 
+                                    Command="{Binding DataContext.CancelAppointmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </Grid>
+
+</UserControl>
+ use athe above appointmentupdated eventhandler in the confirm button
