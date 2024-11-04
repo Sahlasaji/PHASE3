@@ -1,43 +1,193 @@
-<UserControl x:Class="PatientApp.PatientRegControl"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:PatientApp"
-             mc:Ignorable="d" 
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Canvas Width="400" Height="450">
-        <TextBlock Text="Name" Canvas.Left="10" Canvas.Top="10"/>
-        <TextBox x:Name="NameTextBox" Width="200" Canvas.Left="10" Canvas.Top="30"/>
+controls.
 
-        <TextBlock Text="Age" Canvas.Left="10" Canvas.Top="70"/>
-        <TextBox x:Name="AgeTextBox" Width="200" Canvas.Left="10" Canvas.Top="90"/>
+csharp
 
-        <TextBlock Text="Date of Birth" Canvas.Left="10" Canvas.Top="130"/>
-        <DatePicker x:Name="DOBPicker" 
-                    SelectedDateFormat="Short" 
-                    DisplayDateEnd="{x:Static sys:DateTime.Now}" 
-                    Canvas.Left="10" Canvas.Top="150"/>
+Verify
 
-        <TextBlock Text="Address" Canvas.Left="10" Canvas.Top="190"/>
-        <TextBox x:Name="AddressTextBox" Width="200" Canvas.Left="10" Canvas.Top="210"/>
+Open In Editor
+Edit
+Copy code
+using System.Windows;
 
-        <TextBlock Text="Slot" Canvas.Left="10" Canvas.Top="250"/>
-        <ComboBox x:Name="SlotComboBox" Width="200" Canvas.Left="10" Canvas.Top="270">
-            <ComboBoxItem Content="Morning"/>
-            <ComboBoxItem Content="Evening"/>
-        </ComboBox>
+namespace PatientApp
+{
+    public partial class MainWindow : Window
+    {
+        private PatientViewModel _viewModel;
 
-        <TextBlock Text="Booking Date" Canvas.Left="10" Canvas.Top="310"/>
-        <DatePicker x:Name="BookingDatePicker" 
-                    SelectedDateFormat="Short"  
-                    DisplayDateStart="{x:Static sys:DateTime.Now}" 
-                    DisplayDateEnd="{x:Static sys:DateTime.Now.AddDays(1)}" 
-                    Canvas.Left="10" Canvas.Top="330" 
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Center"/>
+        public MainWindow()
+        {
+            InitializeComponent();
+            _viewModel = new PatientViewModel();
+        }
 
-        <Button x:Name="btnRegister" Content="Register" Width="100" Canvas.Left="10" Canvas.Top="380" Click="btnRegister_Click"/>
-    </Canvas>
-</User Control>
+        private void btnRegistration_Click(object sender, RoutedEventArgs e)
+        {
+            var patientRegControl = new PatientRegControl(_viewModel);
+            patientRegControl.RegistrationCompleted += () => MainContent.Content = null;
+            patientRegControl.NavigateToAppointment += () => 
+            {
+                var appointmentControl = new AppointmentConfirmationControl(_viewModel);
+                appointmentControl.AppointmentCompleted += () => MainContent.Content = null;
+                MainContent.Content = appointmentControl;
+            };
+            MainContent.Content = patientRegControl;
+        }
+
+        private void btnAppointment_Click(object sender, RoutedEventArgs e)
+        {
+            var appointmentConfirmationControl = new AppointmentConfirmationControl(_viewModel);
+            appointmentConfirmationControl.AppointmentCompleted += () => MainContent.Content = null;
+            MainContent.Content = appointmentConfirmationControl;
+        }
+
+        private void btnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            var patientDashboardControl = new PatientDashboardControl(_viewModel);
+            MainContent.Content = patientDashboardControl;
+        }
+    }
+}
+3. PatientRegControl.xaml.cs
+Ensure that the registration button click event is handled correctly.
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+using System;
+using System.Windows;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class PatientRegControl : UserControl
+    {
+        private PatientViewModel _viewModel;
+        public event Action NavigateToAppointment;
+        public event Action RegistrationCompleted;
+
+        public PatientRegControl(PatientViewModel viewModel)
+        {
+            InitializeComponent();
+            _viewModel = viewModel;
+        }
+
+        private void btnRegister_Click(object sender, RoutedEventArgs e)
+        {
+            var patient = new Patient
+            {
+                Name = NameTextBox.Text,
+                Age = int.Parse(AgeTextBox.Text),
+                DateOfBirth = DOBPicker.SelectedDate.Value,
+                Address = AddressTextBox.Text,
+                Slot = (SlotComboBox.SelectedItem as ComboBoxItem)?.Content.ToString(),
+                BookingDate = DateTime.Now
+            };
+            _viewModel.RegisterPatient(patient);
+            MessageBox.Show("Patient Details entered Successfully");
+            RegistrationCompleted?.Invoke();
+            NavigateToAppointment?.Invoke();
+        }
+    }
+}
+4. AppointmentConfirmationControl.xaml.cs
+Ensure that the confirmation button click event is handled correctly.
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class AppointmentConfirmationControl : UserControl
+    {
+        private PatientViewModel _viewModel;
+        public event Action NavigateToDashboard;
+        public event Action AppointmentCompleted;
+
+        public AppointmentConfirmationControl(PatientViewModel viewModel)
+        {
+            InitializeComponent();
+            _viewModel = viewModel;
+            LoadPatients();
+        }
+
+        private void LoadPatients()
+        {
+            foreach (var patient in _viewModel.Patients)
+            {
+                var checkBox = new CheckBox
+                {
+                    Content = $"{patient.Name} (Age: {patient.Age}, DOB: {patient.DateOfBirth.ToShortDateString()}, Address: {patient.Address})",
+                    Tag = patient
+                };
+                PatientsListBox.Items.Add(checkBox);
+            }
+        }
+
+        private void btnConfirm_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedPatients = new List<Patient>();
+            for (int i = PatientsListBox.Items.Count - 1; i >= 0; i--)
+            {
+                CheckBox checkBox = PatientsListBox.Items[i] as CheckBox;
+                if (checkBox != null && checkBox.IsChecked == true && checkBox.Tag is Patient patient)
+                {
+                    selectedPatients.Add(patient);
+                    PatientsListBox.Items.RemoveAt(i);
+                }
+            }
+
+            foreach (var confirmedPatient in selectedPatients)
+            {
+                _viewModel.Patients.Remove(confirmedPatient);
+            }
+
+            _viewModel.ConfirmPatients(selectedPatients);
+            MessageBox.Show("Appointment confirmed successfully.");
+            AppointmentCompleted?.Invoke();
+            NavigateToDashboard?.Invoke();
+        }
+    }
+}
+5. PatientDashboardControl.xaml.cs
+Ensure that the dashboard displays the confirmed patients correctly.
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+using System;
+using System.Windows;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class PatientDashboardControl : UserControl
+    {
+        private PatientViewModel _viewModel;
+
+        public PatientDashboardControl(PatientViewModel viewModel)
+        {
+            InitializeComponent();
+            _viewModel = viewModel;
+            DataContext = _viewModel;
+            grdPatients.ItemsSource = _viewModel.ConfirmedPatients;
+        }
+    }
+}
