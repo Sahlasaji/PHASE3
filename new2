@@ -15,7 +15,10 @@
         <TextBox x:Name="AgeTextBox" Width="200" Canvas.Left="10" Canvas.Top="90"/>
 
         <TextBlock Text="Date of Birth" Canvas.Left="10" Canvas.Top="130"/>
-        <DatePicker x:Name="DOBPicker"  SelectedDateFormat="Short" DisplayDateEnd="{x:Static sys:DateTime.Now}" Canvas.Left="10" Canvas.Top="331"/>
+        <DatePicker x:Name="DOBPicker" 
+                    SelectedDateFormat="Short" 
+                    DisplayDateEnd="{x:Static sys:DateTime.Now}" 
+                    Canvas.Left="10" Canvas.Top="150"/>
 
         <TextBlock Text="Address" Canvas.Left="10" Canvas.Top="190"/>
         <TextBox x:Name="AddressTextBox" Width="200" Canvas.Left="10" Canvas.Top="210"/>
@@ -27,8 +30,14 @@
         </ComboBox>
 
         <TextBlock Text="Booking Date" Canvas.Left="10" Canvas.Top="310"/>
-        <DatePicker x:Name="BookingDatePicker" SelectedDateFormat="Short"  DisplayDateStart="{x:Static sys:DateTime.Now}" Canvas.Left="10" Canvas.Top="151" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <DatePicker x:Name="BookingDatePicker" 
+                    SelectedDateFormat="Short"  
+                    DisplayDateStart="{x:Static sys:DateTime.Now}" 
+                    DisplayDateEnd="{x:Static sys:DateTime.Now.AddDays(1)}" 
+                    Canvas.Left="10" Canvas.Top="330" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Center"/>
 
         <Button x:Name="btnRegister" Content="Register" Width="100" Canvas.Left="10" Canvas.Top="380" Click="btnRegister_Click"/>
     </Canvas>
-</UserControl>
+</User Control>
