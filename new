@@ -171,5 +171,5 @@ namespace PatientAdmissionApp
 }
 
 
-
+change this code into eventhandlers only without using Icommand
 
