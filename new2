@@ -177,4 +177,145 @@ MVVM Pattern: Separates the concerns of the application into Model (data), View 
 By adhering to the MVVM pattern and properly implementing event handling, your application becomes more modular, testable, and easier to maintain.
 
 
+Mainwindow.cs
+Code Breakdown
+1. Namespace and Using Directives
+csharp
 
+Verify
+
+Open In Editor
+Edit
+Copy code
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace PatientApp
+{
+    // ...
+}
+Namespaces: The using directives import necessary namespaces for the application. This includes:
+System: Basic system functionalities.
+System.Windows: Provides classes for WPF applications.
+System.Windows.Controls: Contains classes for WPF controls (e.g., buttons, text boxes).
+System.Windows.Media: Provides classes for graphics, colors, and brushes.
+Namespace Declaration: The PatientApp namespace encapsulates all classes related to the patient management application.
+2. Class Declaration
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public partial class MainWindow : Window
+Partial Class: The MainWindow class is declared as partial, meaning its definition can be split across multiple files. This is common in WPF applications where the XAML file (UI definition) is compiled into a partial class.
+
+Inherits from Window: The class inherits from Window, which is the base class for all windows in WPF applications.
+
+3. Field Declaration
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private PatientViewModel _viewModel;
+ViewModel Instance: A private field _viewModel is declared to hold an instance of the PatientViewModel. This ViewModel will manage the application's data and logic related to patient management.
+4. Constructor
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public MainWindow()
+{
+    InitializeComponent();
+    _viewModel = new PatientViewModel();
+}
+InitializeComponent: This method is called to initialize the components defined in the associated XAML file (e.g., MainWindow.xaml). It sets up the UI elements and their properties.
+
+ViewModel Initialization: A new instance of PatientViewModel is created and assigned to _viewModel. This ViewModel will be used throughout the MainWindow to manage patient data.
+
+5. Event Handlers
+The MainWindow class contains several event handlers for button clicks that handle navigation between different views.
+
+a. Registration Button Click
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private void btnRegistration_Click(object sender, RoutedEventArgs e)
+{
+    var patientRegControl = new PatientRegControl(_viewModel);
+    patientRegControl.RegistrationCompleted += () => MainContent.Content = null;
+    patientRegControl.NavigateToAppointment += () =>
+    {
+        var appointmentControl = new AppointmentConfirmationControl(_viewModel);
+        appointmentControl.AppointmentCompleted += () => MainContent.Content = null;
+        MainContent.Content = appointmentControl;
+    };
+    MainContent.Content = patientRegControl;
+}
+Create Patient Registration Control: When the registration button is clicked, a new instance of PatientRegControl is created, passing the _viewModel to it. This allows the registration control to access and modify patient data through the ViewModel.
+
+Event Subscription:
+
+RegistrationCompleted: This event is subscribed to, and when triggered, it sets the MainContent to null, effectively clearing the registration control from the view.
+NavigateToAppointment: This event is also subscribed to. When triggered, it creates an instance of AppointmentConfirmationControl, passing the same _viewModel. It subscribes to the AppointmentCompleted event, which also clears the MainContent when the appointment confirmation is completed.
+Set Main Content: Finally, the MainContent control is set to the patientRegControl, displaying the registration view to the user.
+
+b. Appointment Button Click
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private void btnAppointment_Click(object sender, RoutedEventArgs e)
+{
+    var appointmentConfirmationControl = new AppointmentConfirmationControl(_viewModel);
+    appointmentConfirmationControl.AppointmentCompleted += () => MainContent.Content = null;
+    MainContent.Content = appointmentConfirmationControl;
+}
+Create Appointment Confirmation Control: When the appointment button is clicked, it creates an instance of AppointmentConfirmationControl, passing the _viewModel.
+
+Event Subscription: The AppointmentCompleted event is subscribed to, which clears the MainContent when the appointment confirmation process is completed.
+
+Set Main Content: The MainContent control is set to the appointmentConfirmationControl, displaying the appointment confirmation view to the user.
+
+c. Dashboard Button Click
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private void btnDashboard_Click(object sender, RoutedEventArgs e)
+{
+    var patientDashboardControl = new PatientDashboardControl(_viewModel);
+    MainContent.Content = patientDashboardControl;
+}
+Create Patient Dashboard Control: When the dashboard button is clicked, a new instance of PatientDashboardControl is created, again passing the _viewModel.
+
+Set Main Content: The MainContent control is set to the patientDashboardControl, displaying the patient dashboard view to the user. This view typically shows a list of registered patients and other relevant information.
