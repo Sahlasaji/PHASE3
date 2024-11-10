@@ -1,175 +1,71 @@
-<Window x:Class="PatientAdmissionApp.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PatientAdmissionApp"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Closed="Window_Closed">
-    <Canvas>
-        <TextBlock Text="Patient Management System" FontSize="29" Canvas.Left="200" Canvas.Top="10" FontWeight="Bold"/>
-        <Button Content="Patient Registration" Canvas.Left="10" Canvas.Top="80"  x:Name="btnRegistration" Click="btnRegistration_Click" Command="{Binding RequestShowRegistrationCommand}"  />
-        <Button Content="Appointment Confirmation" Canvas.Left="10" Canvas.Top="130"  x:Name="btnAppointment" Click="btnAppointment_Click" />
-        <Button Content="Patient Dashboard" x:Name="btnDashboard" Canvas.Left="10" Canvas.Top="180" Click="btnDashboard_Click" />
-        <ContentControl x:Name="MainContent"  Margin="20" Canvas.Left="200" Canvas.Top="60" Width="400" Height="300" HorizontalAlignment="Center" VerticalAlignment="Center" />
-    </Canvas>
-
-    
-</Window>
-
-
-using System.Windows;
-
-namespace PatientAdmissionApp
+private void btnRegister_Click(object sender, RoutedEventArgs e)
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    // Input validation
+    string name = NameTextBox.Text.Trim();
+    string address = AddressTextBox.Text.Trim();
+    string slot = (SlotComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+    DateTime? dateOfBirth = DOBPicker.SelectedDate;
+    DateTime bookingDate = DateTime.Now;
+
+    // Validate Name
+    if (string.IsNullOrWhiteSpace(name))
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-            this.DataContext = new PatientViewModel();
+        MessageBox.Show("Please enter a valid name.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
 
-        }
+    // Validate Age
+    if (!int.TryParse(AgeTextBox.Text, out int age) || age <= 0)
+    {
+        MessageBox.Show("Please enter a valid age (positive integer).", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
 
-        private void btnRegistration_Click(object sender, RoutedEventArgs e)
-        {
+    // Validate Date of Birth
+    if (!dateOfBirth.HasValue)
+    {
+        MessageBox.Show("Please select a valid date of birth.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
 
+    // Validate Slot
+    if (string.IsNullOrWhiteSpace(slot))
+    {
+        MessageBox.Show("Please select a time slot.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
 
-            var confirmationControl = new PatientRegistrationControl();
+    // Validate Address
+    if (string.IsNullOrWhiteSpace(address))
+    {
+        MessageBox.Show("Please enter a valid address.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
 
+    // Create Patient object
+    var patient = new Patient
+    {
+        Name = name,
+        Age = age,
+        DateOfBirth = dateOfBirth.Value,
+        Address = address,
+        Slot = slot,
+        BookingDate = bookingDate
+    };
 
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            if (mainWindow != null)
-            {
-                mainWindow.MainContent.Content = confirmationControl;
-            }
+    try
+    {
+        // Register the patient
+        _viewModel.RegisterPatient(patient);
+        MessageBox.Show("Patient details entered successfully.", "Registration Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        RegistrationCompleted?.Invoke();
 
-        }
-
-        private void btnAppointment_Click(object sender, RoutedEventArgs e)
-        {
-            var appointmentControl = new AppointmentControl();
-            var appointmentWindow = Window.GetWindow(this) as MainWindow;
-
-            if (appointmentWindow != null)
-            {
-                appointmentWindow.MainContent.Content = appointmentControl;
-
-            }
-        }
-
-        private void btnDashboard_Click(object sender, RoutedEventArgs e)
-        {
-            var patientDashboardControl = new PatientDashboardControl();
-            var patientDashboard = Window.GetWindow(this) as MainWindow;
-
-            if (patientDashboard != null)
-            {
-                patientDashboard.MainContent.Content = patientDashboardControl;
-
-            }
-        }
-
-        private void Window_Closed(object sender, System.EventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
+        // Trigger navigation to appointment confirmation
+        NavigateToAppointment?.Invoke();
+    }
+    catch (Exception ex)
+    {
+        // Handle any exceptions that occur during registration
+        MessageBox.Show($"An error occurred while registering the patient: {ex.Message}", "Registration Error", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 }
-
-
-using System;
-using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Input;
-
-namespace PatientAdmissionApp
-{
-     public class PatientViewModel : BaseViewModel, Ipatient
-    {
-        public event EventHandler ShowRegistrationRequested;
-        public event EventHandler AppointmentUpdated;
-        public ObservableCollection<PatientModel> Patients { get; set; } = new ObservableCollection<PatientModel>();
-        public ObservableCollection<PatientModel> ConfirmedPatients { get; set; } = new ObservableCollection<PatientModel>();
-
-        private PatientModel _newPatient;
-        public PatientModel NewPatient
-        {
-            get { return _newPatient; }
-            set { _newPatient = value; OnPropertyChanged(); }
-        }
-
-        public ICommand RegisterPatientCommand { get; set; }
-        public ICommand ConfirmAppointmentCommand { get; set; }
-        public ICommand CancelAppointmentCommand { get; set; }
-        public ICommand RequestShowRegistrationCommand { get; set; }
-
-
-
-        public PatientViewModel()
-        {
-            NewPatient = new PatientModel();
-            RegisterPatientCommand = new RelayCommand(RegisterPatient);
-            ConfirmAppointmentCommand = new RelayCommand(ConfirmAppointment);
-            CancelAppointmentCommand = new RelayCommand(CancelAppointment);
-            RequestShowRegistrationCommand = new RelayCommand(RequestShowRegistration);
-
-        }
-
-        public void RegisterPatient(object parameter)
-        {
-            Patients.Add(new PatientModel
-            {
-                Name = NewPatient.Name,
-                Dateofbirth = NewPatient.Dateofbirth,
-                Age = DateTime.Now.Year - NewPatient.Dateofbirth.Year,
-                Address = NewPatient.Address,
-                Slot = NewPatient.Slot,
-                BookingDate = NewPatient.BookingDate
-               
-            });
-            NewPatient = new PatientModel();
-            MessageBox.Show("Registration Success!!!!");
-        }
-
-        public void ConfirmAppointment(object parameter)
-        {
-            if (parameter is PatientModel patient)
-            {
-                // Move patient to ConfirmedPatients and remove from Patients
-                patient.ConfirmationStatus = "Confirmed";
-               
-
-                ConfirmedPatients.Add(patient);
-                Patients.Remove(patient);
-                AppointmentUpdated?.Invoke(this,EventArgs.Empty);
-                MessageBox.Show($"{patient.Name}'s appointment confirmed.");
-            }
-        }
-
-        public void CancelAppointment(object parameter)
-        {
-            if (parameter is PatientModel patient)
-            {
-                // Remove patient from Patients
-                Patients.Remove(patient);
-                MessageBox.Show($"{patient.Name}'s appointment has been canceled.");
-            }
-        }
-
-        private void RequestShowRegistration(object parameter)
-        {
-            ShowRegistrationRequested?.Invoke(this, EventArgs.Empty);
-        }
-
-
-        
-    }
-}
-
-
-change this code into eventhandlers only without using Icommand
-
