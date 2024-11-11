@@ -1,23 +1,145 @@
-public PatientDashboardControl(PatientViewModel viewModel)
-{
-    InitializeComponent();
-    _viewModel = viewModel;
-    LoadPatients();
-}
+1. Patient Class
+csharp
 
-private void LoadPatients()
+Verify
+
+Open In Editor
+Edit
+Copy code
+namespace PatientApp
 {
-    grdPatients.Items.Clear(); // Clear existing items if any
-    foreach (var patient in _viewModel.ConfirmedPatients)
+    public class Patient
     {
-        grdPatients.Items.Add(new
-        {
-            Name = patient.Name,
-            Age = patient.Age,
-            DateOfBirth = patient.DateOfBirth.ToShortDateString(),
-            Address = patient.Address,
-            Slot = patient.Slot,
-            BookingDate = patient.BookingDate.ToShortDateString()
-        });
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public string Address { get; set; }
+        public string Slot { get; set; } 
+        public DateTime BookingDate { get; set; }
     }
 }
+Explanation:
+Purpose: The Patient class serves as a data model representing a patient in the application. It encapsulates various properties related to a patient.
+Properties:
+Name: The name of the patient.
+Age: The age of the patient.
+DateOfBirth: The date of birth of the patient.
+Address: The address of the patient.
+Slot: The time slot for the patient's appointment (e.g., Morning, Evening).
+BookingDate: The date when the appointment is booked.
+2. IPatient Interface
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+namespace PatientApp
+{
+    public interface IPatient
+    {
+        ObservableCollection<Patient> Patients { get; }
+        void RegisterPatient(Patient patient);
+    }
+}
+Explanation:
+Purpose: The IPatient interface defines a contract for classes that manage patient data. It ensures that any implementing class will have a collection of patients and a method to register a new patient.
+Members:
+Patients: A read-only collection of Patient objects (using ObservableCollection allows for data binding in WPF).
+RegisterPatient(Patient patient): A method to register a new patient.
+3. PatientViewModel Class
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+namespace PatientApp
+{
+    public class PatientViewModel : IPatient
+    {
+        public event EventHandler<Patient> OnPatientRegistered;
+        public event EventHandler<string> PatientRegistered;
+
+        public ObservableCollection<Patient> Patients { get; private set; }
+        public ObservableCollection<Patient> ConfirmedPatients { get; private set; }
+
+        public PatientViewModel()
+        {
+            Patients = new ObservableCollection<Patient>();
+            ConfirmedPatients = new ObservableCollection<Patient>();
+        }
+
+        public void RegisterPatient(Patient patient)
+        {
+            Patients.Add(patient);
+            
+            // Raise an event for notification
+            OnPatientRegistered?.Invoke(this, patient);
+            PatientRegistered?.Invoke(this, "Registration Completed");
+        }
+
+        public void ConfirmPatients(List<Patient> selectedPatients)
+        {
+            ConfirmedPatients.Clear();
+            foreach (var patient in selectedPatients)
+            {
+                ConfirmedPatients.Add(patient);
+            }
+        }
+    }
+}
+Explanation:
+Purpose: The PatientViewModel class acts as the intermediary between the data (the Patient model) and the user interface (UI). It implements the IPatient interface and manages the collection of patients.
+Members:
+Events:
+OnPatientRegistered: An event that is triggered when a patient is registered. It uses EventHandler<Patient> to pass the registered patient as an argument.
+PatientRegistered: An event that is triggered to notify that registration has been completed, passing a string message.
+Properties:
+Patients: An observable collection of Patient objects.
+ConfirmedPatients: An observable collection to hold confirmed patients.
+Constructor: Initializes the Patients and ConfirmedPatients collections.
+Methods:
+RegisterPatient(Patient patient): Adds a patient to the Patients collection and raises the OnPatientRegistered and PatientRegistered events to notify subscribers about the registration.
+ConfirmPatients(List<Patient> selectedPatients): Clears the ConfirmedPatients collection and adds the selected patients to it.
+4. Event Handlers
+How Event Handlers Are Used:
+Definition: An event handler is a method that is called in response to an event being raised. In this code, events are used to notify other parts of the application when certain actions occur, such as registering a patient.
+
+Subscribing to Events: In the MainWindow class, the OnPatientRegistered event is subscribed to when the PatientViewModel is instantiated:
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+_viewModel.OnPatientRegistered += OnPatientRegistered;
+Raising Events: When a patient is registered using the RegisterPatient method, the following lines raise the events:
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+OnPatientRegistered?.Invoke(this, patient);
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+ PatientRegistered?.Invoke(this, "Registration Completed");
+Event Invocation: The ?. operator is used to safely invoke the event, ensuring that if there are no subscribers, it won't throw a NullReferenceException. This means that if any methods are subscribed to the event, they will be called with the specified parameters.
+5. Usage in the Application
+User Interaction: When a user registers a patient through the UI, the btnRegister_Click method in PatientRegControl is triggered. This method creates a Patient object and calls the RegisterPatient method on the PatientViewModel.
+Notification: After a patient is registered, the OnPatientRegistered event is raised, which triggers the OnPatientRegistered method in MainWindow. This method displays a message box confirming the registration.
+Decoupling: The use of events allows for a decoupled architecture where the PatientViewModel does not need to know about the UI components directly. It simply raises events, and any interested parties (like the MainWindow) can respond accordingly.
+Summary
+In summary, the Patient, IPatient, and PatientViewModel classes work together to manage patient data in the application. The Patient class serves as a data model, the IPatient interface defines the contract for patient management, and the PatientViewModel implements this interface while handling the logic for registering and confirming patients. Event handlers are used to notify the UI of changes, allowing for a responsive and interactive user experience. This design pattern promotes separation of concerns, making the application easier to maintain and extend.
