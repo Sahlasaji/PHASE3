@@ -247,8 +247,8 @@ namespace PatientApp
     public partial class PatientRegControl : UserControl
     {
         private PatientViewModel _viewModel;
-        public event Action NavigateToAppointment;
-        public event Action RegistrationCompleted;
+        public event EventHandler NavigateToAppointment;
+        public event EventHandler RegistrationCompleted;
 
         public PatientRegControl(PatientViewModel viewModel)
         {
@@ -261,9 +261,10 @@ namespace PatientApp
             // Input validation
             string name = NameTextBox.Text.Trim();
             string address = AddressTextBox.Text.Trim();
-            string slot = (SlotComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
             DateTime? dateOfBirth = DOBPicker.SelectedDate;
-            DateTime bookingDate = DateTime.Now;
+            string slot = (SlotComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+            
+            DateTime? bookingDate = BookingDatePicker.SelectedDate;
 
             // Validate Name
             if (string.IsNullOrWhiteSpace(name))
@@ -308,18 +309,18 @@ namespace PatientApp
                 DateOfBirth = dateOfBirth.Value,
                 Address = address,
                 Slot = slot,
-                BookingDate = bookingDate
+                BookingDate = bookingDate.Value
             };
 
             try
             {
                 // Register the patient
                 _viewModel.RegisterPatient(patient);
-                MessageBox.Show("Patient details entered successfully.", "Registration Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                RegistrationCompleted?.Invoke();
+                //MessageBox.Show("Patient details entered successfully.", "Registration Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                RegistrationCompleted?.Invoke(this,EventArgs.Empty);
 
                 // Trigger navigation to appointment confirmation
-                NavigateToAppointment?.Invoke();
+                NavigateToAppointment?.Invoke(this,EventArgs.Empty);
             }
             catch (Exception ex)
             {
