@@ -1,4 +1,4 @@
-create a new event to notify the appointmentconfirmation usercontrol and patientdashboard usercontrol when a new patient is registered along with a text message to be displayed in both user control when opened
+in this when dob is displayed,time is also showing,i need to change it, i want only date to be displayed,please change the code
 Patient.cs
 
 using System;
