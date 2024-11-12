@@ -1,3 +1,4 @@
+create a new event to notify the appointmentconfirmation usercontrol and patientdashboard usercontrol when a new patient is registered along with a text message to be displayed in both user control when opened
 Patient.cs
 
 using System;
