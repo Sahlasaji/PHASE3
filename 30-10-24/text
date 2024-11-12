@@ -1,1 +1,137 @@
 
+This code represents a `MainWindow` class in a WPF application (`PatientApp`) that manages the patient registration and appointment processes, using events to handle user actions such as registering a patient, completing an appointment, and navigating through different sections of the app. Below is a line-by-line explanation, including details on how events are raised and subscribed.
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+```
+
+- These are the `using` directives for importing the necessary namespaces. They provide access to basic .NET types (`System`), collections, and various WPF components, including UI elements like `Window`, `Button`, and `ContentControl`.
+
+```csharp
+namespace PatientApp
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+```
+
+- Defines the namespace `PatientApp`, which organizes the classes in the project.
+- The `MainWindow` class represents the main window of the WPF application, inheriting from `Window`. It’s defined as `partial` to split the code between the XAML file and this code-behind file.
+
+```csharp
+        private PatientViewModel _viewModel;
+```
+
+- Declares a private field `_viewModel` of type `PatientViewModel`, which will serve as the data context for the UI. This class is likely responsible for managing patient data and handling related business logic.
+
+```csharp
+        public MainWindow()
+        {
+            InitializeComponent();
+            _viewModel = new PatientViewModel();
+            _viewModel.OnPatientRegistered += OnPatientRegistered;
+        }
+```
+
+- `MainWindow` constructor:
+  - `InitializeComponent()` initializes the components declared in the XAML file, setting up the UI.
+  - Instantiates `_viewModel` as a new `PatientViewModel` object.
+  - Subscribes to the `OnPatientRegistered` event of `_viewModel`. `OnPatientRegistered` is an event in `PatientViewModel` that signals when a patient registration completes. This subscription links the `OnPatientRegistered` method (defined below) as the event handler, which will be triggered when the event is raised.
+
+```csharp
+        private void OnPatientRegistered(object sender, Patient patient)
+        {
+            MessageBox.Show($"Patient {patient.Name} registered!", "Registration Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+```
+
+- Defines the `OnPatientRegistered` method, which handles the `OnPatientRegistered` event.
+  - This method will be executed when `_viewModel.OnPatientRegistered` is raised. It displays a `MessageBox` indicating the successful registration of a patient, showing the patient’s name.
+
+```csharp
+        private void btnRegistration_Click(object sender, RoutedEventArgs e)
+        {
+            var patientRegControl = new PatientRegControl(_viewModel);
+            patientRegControl.RegistrationCompleted += (s,args) => MainContent.Content = null;
+            patientRegControl.NavigateToAppointment += (s,args) =>
+            {
+                var appointmentControl = new AppointmentConfirmationControl(_viewModel);
+                appointmentControl.AppointmentCompleted += (s1, args1) => MainContent.Content = null;
+                MainContent.Content = appointmentControl;
+            };
+            MainContent.Content = patientRegControl;
+        }
+```
+
+- Defines the `btnRegistration_Click` method, which handles the click event of the registration button (`btnRegistration`).
+  - Creates a new instance of `PatientRegControl`, passing `_viewModel` to share data and logic.
+  - Subscribes to two events of `PatientRegControl`:
+    - **`RegistrationCompleted` event**: Sets the `MainContent.Content` to `null` to clear the content area after registration is complete.
+    - **`NavigateToAppointment` event**: This event triggers navigation to an appointment confirmation screen.
+      - Inside this event handler:
+        - Creates a new instance of `AppointmentConfirmationControl`.
+        - Subscribes to its `AppointmentCompleted` event, which clears the content area when the appointment is complete.
+        - Sets `MainContent.Content` to `appointmentControl`, showing the appointment confirmation screen.
+  - Finally, `MainContent.Content` is set to `patientRegControl`, displaying the patient registration screen.
+
+```csharp
+        private void btnAppointment_Click(object sender, RoutedEventArgs e)
+        {
+            var appointmentConfirmationControl = new AppointmentConfirmationControl(_viewModel);
+            appointmentConfirmationControl.AppointmentCompleted += (s,args) => MainContent.Content = null;
+            MainContent.Content = appointmentConfirmationControl;
+        }
+```
+
+- Defines `btnAppointment_Click`, which handles the click event of the appointment button (`btnAppointment`).
+  - Creates an instance of `AppointmentConfirmationControl`.
+  - Subscribes to its `AppointmentCompleted` event, which clears the content area after the appointment is completed.
+  - Sets `MainContent.Content` to `appointmentConfirmationControl`, displaying the appointment confirmation screen.
+
+```csharp
+        private void btnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            var patientDashboardControl = new PatientDashboardControl(_viewModel);
+            MainContent.Content = patientDashboardControl;
+        }
+    }
+}
+```
+
+- Defines `btnDashboard_Click`, which handles the click event of the dashboard button (`btnDashboard`).
+  - Creates an instance of `PatientDashboardControl`.
+  - Sets `MainContent.Content` to `patientDashboardControl`, displaying the patient dashboard.
+
+### Event Subscription and Triggering
+
+1. **Subscription**:
+   - The `MainWindow` constructor subscribes to the `OnPatientRegistered` event of `_viewModel`:
+     ```csharp
+     _viewModel.OnPatientRegistered += OnPatientRegistered;
+     ```
+     This means that when `_viewModel` raises the `OnPatientRegistered` event, `OnPatientRegistered` method in `MainWindow` will execute.
+
+   - The `btnRegistration_Click` method subscribes to `RegistrationCompleted` and `NavigateToAppointment` events of `patientRegControl`. These handlers will be called when the respective events are triggered by `patientRegControl`.
+
+   - The `btnAppointment_Click` method subscribes to the `AppointmentCompleted` event of `appointmentConfirmationControl`.
+
+2. **Triggering**:
+   - In `PatientViewModel`, the `OnPatientRegistered` event is raised (not shown here, but it’s typically done using code like `OnPatientRegistered?.Invoke(this, new Patient(...));`).
+   - `PatientRegControl` and `AppointmentConfirmationControl` will raise `RegistrationCompleted`, `NavigateToAppointment`, and `AppointmentCompleted` events, likely through code similar to `Event?.Invoke(...)`.
+
+This structure allows different components to notify `MainWindow` of specific actions, letting the application respond flexibly to user interactions.
