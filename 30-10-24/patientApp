@@ -1,6 +1,4 @@
 
-Patient.cs
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +11,10 @@ namespace PatientApp
     {
         public string Name { get; set; }
         public int Age { get; set; }
-        public DateTime DateOfBirth { get; set; }
+        public string DateOfBirth { get; set; }
         public string Address { get; set; }
         public string Slot { get; set; } 
-        public DateTime BookingDate { get; set; }
+        public string BookingDate { get; set; }
 
     }
 }
@@ -144,6 +142,16 @@ namespace PatientApp
             InitializeComponent();
             _viewModel = new PatientViewModel();
             _viewModel.OnPatientRegistered += OnPatientRegistered;
+            _viewModel.OnAppointmentConfirmed += OnAppointmentConfirmed;
+
+
+        }
+
+        private void OnAppointmentConfirmed(object sender, Patient e)
+        {
+            MessageBox.Show("Appointment confirmed successfully.");
+
+
         }
 
         private void OnPatientRegistered(object sender, Patient patient)
@@ -160,6 +168,12 @@ namespace PatientApp
                 var appointmentControl = new AppointmentConfirmationControl(_viewModel);
                 appointmentControl.AppointmentCompleted += (s1, args1) => MainContent.Content = null;
                 MainContent.Content = appointmentControl;
+                appointmentControl.NavigateToDashboard += (s2, args2) =>
+                {
+                    var patientDashboardControl = new PatientDashboardControl(_viewModel);
+                    patientDashboardControl.DashboardCompleted += (s1, args1) => MainContent.Content = null;
+                    MainContent.Content = patientDashboardControl;
+                };
             };
             MainContent.Content = patientRegControl;
         }
@@ -178,6 +192,7 @@ namespace PatientApp
         }
     }
 }
+
 
 
 
@@ -255,6 +270,7 @@ namespace PatientApp
         {
             InitializeComponent();
             _viewModel = viewModel;
+            
         }
 
         private void btnRegister_Click(object sender, RoutedEventArgs e)
@@ -307,10 +323,10 @@ namespace PatientApp
             {
                 Name = name,
                 Age = age,
-                DateOfBirth = dateOfBirth.Value,
+                BookingDate = DOBPicker.SelectedDate.HasValue ? DOBPicker.SelectedDate.Value.ToString("yyyy-MM-dd") :DateTime.Now.ToString("yyyy-MM-dd"),
                 Address = address,
                 Slot = slot,
-                BookingDate = bookingDate.Value
+                DateOfBirth = BookingDatePicker.SelectedDate.Value.ToString("yyyy-MM-dd")
             };
 
             try
@@ -495,26 +511,27 @@ namespace PatientApp
     public partial class PatientDashboardControl : UserControl
     {
         private PatientViewModel _viewModel;
+        public event EventHandler DashboardCompleted;
 
         public PatientDashboardControl(PatientViewModel viewModel)
         {
             InitializeComponent();
             _viewModel = viewModel;
             DataContext = _viewModel;
-            _viewModel.PatientRegistered += OnPatientRegistered;
+            //_viewModel.PatientRegistered += OnPatientRegistered;
             grdPatients.ItemsSource = _viewModel.ConfirmedPatients;
+            DashboardCompleted?.Invoke(this, EventArgs.Empty);
         }
 
-        private void OnPatientRegistered(object sender, string message)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                RegistrationStatusTextBox.Text = message;
-            });
-           
-        }
+        //private void OnPatientRegistered(object sender, string message)
+        //{
+        //    Dispatcher.Invoke(() =>
+        //    {
+        //        RegistrationStatusTextBox.Text = message;
+        //    });
 
-       
+        //}
+
+
     }
 }
-
