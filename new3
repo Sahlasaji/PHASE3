@@ -81,3 +81,59 @@ private void OnPatientRegistered(object sender, Patient patient)
 - **User Notifications**: Event handlers notify the user of actions performed on patient data through message boxes. 
 
 This setup follows the MVVM (Model-View-ViewModel) pattern, where the `PatientViewModel` acts as the ViewModel, and `MainWindow` is the View, which interacts with the ViewModel through events.
+///////
+In your code, unsubscribing from events plays a critical role in memory management, particularly in preventing memory leaks. Below is a more detailed explanation of how unsubscription happens and why it's important:
+
+### 1. **Event Subscription**
+
+When the `MainWindow` is initialized, you subscribe to the events of the `PatientViewModel`:
+
+```csharp
+_viewModel.OnPatientRegistered += OnPatientRegistered;
+_viewModel.OnAppointmentConfirmed += OnAppointmentConfirmed;
+```
+
+Here, you're adding the `OnPatientRegistered` and `OnAppointmentConfirmed` methods in `MainWindow` as event handlers for the respective events in `PatientViewModel`. Subscribing means that when those events are triggered (e.g., when a patient is registered or an appointment is confirmed), your event handler methods in `MainWindow` will be executed.
+
+### 2. **Why Unsubscribe?**
+
+Unsubscribing from events is necessary for several reasons:
+
+- **Memory Leaks**: In C#, events can prevent the garbage collection (GC) of objects that are no longer needed. When an object subscribes to an event, it creates a reference between the event publisher (e.g., `PatientViewModel`) and the event subscriber (e.g., `MainWindow`). If the subscriber is not unsubscribed, the event publisher holds a reference to it, preventing the garbage collector from releasing the subscriber's resources, even if the subscriber (like `MainWindow`) is no longer in use. This leads to a **memory leak**.
+  
+- **Avoiding Redundant Execution**: If you do not unsubscribe, even after closing the window, the event handlers might still be called if the event is triggered, leading to unnecessary operations or UI changes, which can be inefficient.
+
+### 3. **Event Unsubscription**
+
+To avoid these issues, you're unsubscribing from the events when the `MainWindow` is closed:
+
+```csharp
+this.Closed += (s, e) => UnsubscribeEvents();
+```
+
+Here, you attach an event handler to the `Closed` event of the `MainWindow`. When the window is closed, the `Closed` event is triggered, and the `UnsubscribeEvents()` method is called. This method removes the event handlers from the events, ensuring that `MainWindow` no longer listens for the events in `PatientViewModel`.
+
+### 4. **How Unsubscribing Works**
+
+```csharp
+private void UnsubscribeEvents()
+{
+    _viewModel.OnPatientRegistered -= OnPatientRegistered;
+    _viewModel.OnAppointmentConfirmed -= OnAppointmentConfirmed;
+}
+```
+
+- The `OnPatientRegistered -= OnPatientRegistered;` line removes the `OnPatientRegistered` method from the `OnPatientRegistered` event.
+- Similarly, the `OnAppointmentConfirmed -= OnAppointmentConfirmed;` line removes the `OnAppointmentConfirmed` method from the `OnAppointmentConfirmed` event.
+
+After this method is executed, the `MainWindow` will no longer react to the events from `PatientViewModel`, and the references between `MainWindow` and `PatientViewModel` will be cleared, allowing the garbage collector to clean up any unused objects.
+
+### 5. **Final Thoughts**
+
+By unsubscribing from events in the `Closed` event handler, you ensure that:
+
+- No memory is unnecessarily retained by the event subscriptions.
+- The event handlers will not be invoked after the window is closed, which is important for user experience and resource management.
+- You follow best practices for working with events in C# to avoid memory leaks and ensure proper cleanup of event subscriptions.
+
+This practice is particularly important in WPF, where objects like windows and view models can live longer than expected if not properly cleaned up.
