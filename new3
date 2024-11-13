@@ -1,1 +1,83 @@
+This code represents a WPF (Windows Presentation Foundation) `MainWindow` class that interacts with a `PatientViewModel` to handle patient registrations and appointment confirmations. Below is a detailed explanation of each part of the code:
 
+### 1. Class Declaration and Field Initialization
+
+```csharp
+public partial class MainWindow : Window
+{
+    private PatientViewModel _viewModel;
+```
+
+- `MainWindow` is a class that inherits from `Window`, making it the main window in a WPF application.
+- `_viewModel` is a private field of type `PatientViewModel`. It acts as the data context for `MainWindow`, managing patient data and raising events for specific actions like registration and appointment confirmation.
+
+### 2. Constructor
+
+```csharp
+public MainWindow()
+{
+    InitializeComponent();
+    _viewModel = new PatientViewModel();
+    _viewModel.OnPatientRegistered += OnPatientRegistered;
+    _viewModel.OnAppointmentConfirmed += OnAppointmentConfirmed;
+
+    // Unsubscribe when window is closed
+    this.Closed += (s, e) => UnsubscribeEvents();
+}
+```
+
+- **`InitializeComponent()`**: This method initializes the components defined in the XAML for `MainWindow`.
+- **`_viewModel = new PatientViewModel();`**: Creates a new instance of `PatientViewModel` and assigns it to `_viewModel`.
+- **Event Subscriptions**:
+  - `_viewModel.OnPatientRegistered += OnPatientRegistered;` subscribes the `OnPatientRegistered` method in `MainWindow` to the `OnPatientRegistered` event in `PatientViewModel`.
+  - `_viewModel.OnAppointmentConfirmed += OnAppointmentConfirmed;` subscribes `OnAppointmentConfirmed` to `OnAppointmentConfirmed`.
+- **Unsubscribing on Window Closed**:
+  - `this.Closed += (s, e) => UnsubscribeEvents();` attaches an event handler to the `Closed` event of the `MainWindow`.
+  - When the `Closed` event is triggered (i.e., the window is completely closed), it calls `UnsubscribeEvents()` to detach event handlers, preventing potential memory leaks.
+
+### 3. Event Unsubscription
+
+```csharp
+private void UnsubscribeEvents()
+{
+    _viewModel.OnPatientRegistered -= OnPatientRegistered;
+    _viewModel.OnAppointmentConfirmed -= OnAppointmentConfirmed;
+}
+```
+
+- This method is responsible for unsubscribing `MainWindow` event handlers from the events in `PatientViewModel`.
+- By unsubscribing, it helps release any references between `MainWindow` and `_viewModel` that could prevent garbage collection, ensuring proper cleanup.
+
+### 4. Event Handlers
+
+#### `OnAppointmentConfirmed`
+
+```csharp
+private void OnAppointmentConfirmed(object sender, Patient e)
+{
+    MessageBox.Show("Appointment confirmed successfully.");
+}
+```
+
+- This method handles the `OnAppointmentConfirmed` event from `PatientViewModel`.
+- When an appointment is confirmed, it displays a message box to notify the user with the message "Appointment confirmed successfully."
+
+#### `OnPatientRegistered`
+
+```csharp
+private void OnPatientRegistered(object sender, Patient patient)
+{
+    MessageBox.Show($"Patient {patient.Name} registered!", "Registration Success", MessageBoxButton.OK, MessageBoxImage.Information);
+}
+```
+
+- This method handles the `OnPatientRegistered` event from `PatientViewModel`.
+- When a patient is registered, it displays a message box with the patient’s name, confirming the registration and displaying "Registration Success" as the title.
+
+### Summary
+
+- **Purpose**: The code sets up a main window that listens to events from a `PatientViewModel` to provide feedback (via message boxes) for patient registration and appointment confirmation.
+- **Memory Management**: By subscribing and unsubscribing from events appropriately, it ensures efficient memory usage and prevents potential memory leaks.
+- **User Notifications**: Event handlers notify the user of actions performed on patient data through message boxes. 
+
+This setup follows the MVVM (Model-View-ViewModel) pattern, where the `PatientViewModel` acts as the ViewModel, and `MainWindow` is the View, which interacts with the ViewModel through events.
