@@ -463,3 +463,48 @@ namespace PatientApp
         }
     }
 }
+using System.Collections.ObjectModel;
+
+namespace PatientApp
+{
+    public class PatientViewModel
+    {
+        public ObservableCollection<Patient> Patients { get; set; }
+        public ObservableCollection<Patient> ConfirmedPatients { get; set; }
+
+        public event EventHandler<Patient> OnPatientRegistered;
+        public event EventHandler<Patient> OnAppointmentConfirmed;
+
+        public PatientViewModel()
+        {
+            Patients = new ObservableCollection<Patient>();
+            ConfirmedPatients = new ObservableCollection<Patient>();
+        }
+
+        public void RegisterPatient(string name, int age, string dateOfBirth, string address, string slot, string bookingDate)
+        {
+            var patient = new Patient
+            {
+                Name = name,
+                Age = age,
+                DateOfBirth = dateOfBirth,
+                Address = address,
+                Slot = slot,
+                BookingDate = bookingDate
+            };
+
+            Patients.Add(patient);
+            OnPatientRegistered?.Invoke(this, patient);
+        }
+
+        public void ConfirmPatients(List<Patient> selectedPatients)
+        {
+            foreach (var patient in selectedPatients)
+            {
+                ConfirmedPatients.Add(patient);
+                Patients.Remove(patient); // Optionally remove from Patients if you want to keep track of only confirmed patients
+                OnAppointmentConfirmed?.Invoke(this, patient);
+            }
+        }
+    }
+}
