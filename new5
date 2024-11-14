@@ -1,1 +1,295 @@
+Here’s how you can implement navigation and handle user actions without using `ICommand`. Instead, we can directly call methods from the ViewModel in code-behind, maintaining minimal logic in `.xaml.cs` files while keeping the main functionality in ViewModels.
 
+### Step 1: ViewModels for Each UserControl
+
+#### 1.1 `PatientRegViewModel.cs`
+
+Define properties and methods for patient registration and navigation.
+
+```csharp
+using System;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientRegViewModel : INotifyPropertyChanged
+    {
+        private readonly PatientViewModel _mainViewModel;
+        public Patient Patient { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public PatientRegViewModel(PatientViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+            Patient = new Patient();
+        }
+
+        public void RegisterPatient()
+        {
+            _mainViewModel.RegisterPatient(Patient);
+            // Clear patient details after registration
+            Patient = new Patient();
+            OnPropertyChanged(nameof(Patient));
+        }
+
+        public void NavigateToAppointment()
+        {
+            _mainViewModel.NavigateToAppointment();
+        }
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
+```
+
+#### 1.2 `AppointmentConfirmationViewModel.cs`
+
+Define methods for confirming an appointment and navigating to the dashboard.
+
+```csharp
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class AppointmentConfirmationViewModel : INotifyPropertyChanged
+    {
+        private readonly PatientViewModel _mainViewModel;
+
+        public ObservableCollection<Patient> Patients { get; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public AppointmentConfirmationViewModel(PatientViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+            Patients = _mainViewModel.Patients;
+        }
+
+        public void ConfirmAppointment()
+        {
+            _mainViewModel.ConfirmAppointments(Patients);
+        }
+
+        public void NavigateToDashboard()
+        {
+            _mainViewModel.NavigateToDashboard();
+        }
+    }
+}
+```
+
+#### 1.3 `PatientDashboardViewModel.cs`
+
+Define properties for the patient dashboard.
+
+```csharp
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientDashboardViewModel : INotifyPropertyChanged
+    {
+        public ObservableCollection<Patient> ConfirmedPatients { get; }
+
+        public PatientDashboardViewModel(PatientViewModel mainViewModel)
+        {
+            ConfirmedPatients = mainViewModel.ConfirmedPatients;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+    }
+}
+```
+
+### Step 2: Update UserControl XAML Files and Code-Behind
+
+Bind UI elements to ViewModel properties in XAML, and handle button clicks in the code-behind.
+
+#### Example: `PatientRegControl.xaml`
+
+```xml
+<UserControl x:Class="PatientApp.PatientRegControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.PatientRegViewModel}">
+    <Canvas Width="400" Height="450">
+        <TextBox Text="{Binding Patient.Name}" Width="200" Canvas.Left="10" Canvas.Top="30"/>
+        <TextBox Text="{Binding Patient.Age}" Width="200" Canvas.Left="10" Canvas.Top="90"/>
+        <DatePicker SelectedDate="{Binding Patient.DateOfBirth}" Width="200" Canvas.Left="10" Canvas.Top="150"/>
+        <TextBox Text="{Binding Patient.Address}" Width="200" Canvas.Left="10" Canvas.Top="210"/>
+        <ComboBox SelectedItem="{Binding Patient.Slot}" Width="200" Canvas.Left="10" Canvas.Top="270">
+            <ComboBoxItem Content="Morning"/>
+            <ComboBoxItem Content="Evening"/>
+        </ComboBox>
+        <DatePicker SelectedDate="{Binding Patient.BookingDate}" Width="200" Canvas.Left="10" Canvas.Top="330"/>
+        <Button Content="Register" Width="100" Canvas.Left="10" Canvas.Top="380" Click="RegisterButton_Click"/>
+        <Button Content="Next" Width="100" Canvas.Left="120" Canvas.Top="380" Click="NextButton_Click"/>
+    </Canvas>
+</UserControl>
+```
+
+#### `PatientRegControl.xaml.cs`
+
+Handle button clicks in the code-behind to call methods on the ViewModel.
+
+```csharp
+using System.Windows;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class PatientRegControl : UserControl
+    {
+        private PatientRegViewModel ViewModel => DataContext as PatientRegViewModel;
+
+        public PatientRegControl()
+        {
+            InitializeComponent();
+        }
+
+        private void RegisterButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.RegisterPatient();
+        }
+
+        private void NextButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.NavigateToAppointment();
+        }
+    }
+}
+```
+
+### Step 3: Main ViewModel with Navigation Logic
+
+Define the main ViewModel with methods for changing the current view and managing data.
+
+```csharp
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientViewModel : INotifyPropertyChanged
+    {
+        private object _currentViewModel;
+        public ObservableCollection<Patient> Patients { get; set; } = new ObservableCollection<Patient>();
+        public ObservableCollection<Patient> ConfirmedPatients { get; set; } = new ObservableCollection<Patient>();
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public object CurrentViewModel
+        {
+            get => _currentViewModel;
+            set
+            {
+                _currentViewModel = value;
+                OnPropertyChanged(nameof(CurrentViewModel));
+            }
+        }
+
+        public PatientViewModel()
+        {
+            NavigateToRegistration();
+        }
+
+        public void NavigateToRegistration()
+        {
+            CurrentViewModel = new PatientRegViewModel(this);
+        }
+
+        public void NavigateToAppointment()
+        {
+            CurrentViewModel = new AppointmentConfirmationViewModel(this);
+        }
+
+        public void NavigateToDashboard()
+        {
+            CurrentViewModel = new PatientDashboardViewModel(this);
+        }
+
+        public void RegisterPatient(Patient patient)
+        {
+            Patients.Add(patient);
+        }
+
+        public void ConfirmAppointments(ObservableCollection<Patient> patients)
+        {
+            foreach (var patient in patients)
+            {
+                ConfirmedPatients.Add(patient);
+            }
+        }
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
+```
+
+### Step 4: MainWindow XAML and Code-Behind
+
+Set up the `ContentControl` in `MainWindow.xaml` to switch views based on the `CurrentViewModel`.
+
+```xml
+<Window x:Class="PatientApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Patient Management System" Height="450" Width="800">
+    <Grid>
+        <StackPanel Orientation="Horizontal">
+            <Button Content="Register Patient" Click="ShowRegistration_Click"/>
+            <Button Content="Confirm Appointment" Click="ShowAppointment_Click"/>
+            <Button Content="Dashboard" Click="ShowDashboard_Click"/>
+        </StackPanel>
+
+        <ContentControl Content="{Binding CurrentViewModel}" Grid.Row="1"/>
+    </Grid>
+</Window>
+```
+
+#### `MainWindow.xaml.cs`
+
+Handle navigation buttons in the code-behind.
+
+```csharp
+using System.Windows;
+
+namespace PatientApp
+{
+    public partial class MainWindow : Window
+    {
+        private PatientViewModel ViewModel => DataContext as PatientViewModel;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            DataContext = new PatientViewModel();
+        }
+
+        private void ShowRegistration_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.NavigateToRegistration();
+        }
+
+        private void ShowAppointment_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.NavigateToAppointment();
+        }
+
+        private void ShowDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.NavigateToDashboard();
+        }
+    }
+}
+```
+
+This code keeps ViewModel logic separate and enables button handling in `.xaml.cs` files for simplicity.
