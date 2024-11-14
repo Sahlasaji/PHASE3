@@ -1,1 +1,147 @@
 
+After creating new view models, you can use data binding to connect them to the views. Data binding enables you to pass values between the view models and views without directly manipulating controls in code-behind files. Here's a step-by-step guide on how to set up this data binding.
+
+### 1. Set Up DataContext in Code-Behind or XAML
+Each view’s code-behind file or XAML file should set its `DataContext` to the appropriate view model. The `DataContext` is what allows the view to bind directly to properties in the view model.
+
+#### Example: `PatientRegistrationView.xaml.cs`
+
+In the code-behind, set the `DataContext` to an instance of `PatientRegControlViewModel`.
+
+```csharp
+// PatientRegistrationView.xaml.cs
+public partial class PatientRegistrationView : UserControl
+{
+    public PatientRegistrationView()
+    {
+        InitializeComponent();
+        DataContext = new PatientRegControlViewModel();
+    }
+}
+```
+
+Alternatively, you can do this in XAML if you have your view model in the same namespace as the view.
+
+#### XAML Option
+If using XAML directly, add a namespace reference at the top:
+
+```xml
+<UserControl x:Class="PatientApp.PatientRegistrationView"
+             xmlns:local="clr-namespace:PatientApp"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.DataContext>
+        <local:PatientRegControlViewModel />
+    </UserControl.DataContext>
+    <!-- UI Elements -->
+</UserControl>
+```
+
+### 2. Bind View Elements to ViewModel Properties
+In your XAML, bind UI elements to properties in the view model. This allows data to flow from the view model to the view and vice versa.
+
+#### Example: `PatientRegistrationView.xaml`
+
+Assume `PatientRegControlViewModel` has a `NewPatient` property of type `Patient`, with fields such as `Name` and `Age`.
+
+```xml
+<UserControl x:Class="PatientApp.PatientRegistrationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBox Text="{Binding NewPatient.Name, Mode=TwoWay}" PlaceholderText="Enter Name" />
+        <TextBox Text="{Binding NewPatient.Age, Mode=TwoWay}" PlaceholderText="Enter Age" />
+        <Button Content="Register" Command="{Binding RegisterCommand}" />
+    </StackPanel>
+</UserControl>
+```
+
+Here:
+- The `TextBox` for `Name` and `Age` is bound to `NewPatient.Name` and `NewPatient.Age` in `PatientRegControlViewModel`.
+- The `RegisterCommand` would be a command in `PatientRegControlViewModel` that handles registration logic.
+
+### 3. Handle Events Using Commands
+Use commands in the view model instead of event handlers in the view’s code-behind to ensure separation between view and logic. You can implement commands for button actions such as registration.
+
+#### Example Command in `PatientRegControlViewModel`
+
+Add a command to the view model using `ICommand`.
+
+```csharp
+using System.Windows.Input;
+
+public class PatientRegControlViewModel
+{
+    public Patient NewPatient { get; set; }
+    public ICommand RegisterCommand { get; }
+
+    public PatientRegControlViewModel()
+    {
+        NewPatient = new Patient();
+        RegisterCommand = new RelayCommand(RegisterPatient);
+    }
+
+    private void RegisterPatient()
+    {
+        // Handle registration logic here
+    }
+}
+```
+
+To implement `RelayCommand`, you can define a simple command class as follows:
+
+```csharp
+using System;
+using System.Windows.Input;
+
+public class RelayCommand : ICommand
+{
+    private readonly Action _execute;
+    private readonly Func<bool> _canExecute;
+
+    public RelayCommand(Action execute, Func<bool> canExecute = null)
+    {
+        _execute = execute;
+        _canExecute = canExecute;
+    }
+
+    public bool CanExecute(object parameter) => _canExecute == null || _canExecute();
+
+    public void Execute(object parameter) => _execute();
+
+    public event EventHandler CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+}
+```
+
+Now, `RegisterCommand` will invoke the `RegisterPatient` method in `PatientRegControlViewModel` when the button in the view is clicked.
+
+### 4. Pass Data Between ViewModels
+If you need to share data between view models (e.g., to update the appointment list when a patient registers), you could use a shared data model or a mediator pattern like an `EventAggregator`.
+
+#### Example of Event-Based Data Sharing
+
+In `PatientRegControlViewModel`, raise an event when a patient is registered. Then, in your main view or application, handle this event to pass data to other view models.
+
+```csharp
+// In PatientRegControlViewModel.cs
+public event EventHandler<Patient> PatientRegistered;
+
+private void RegisterPatient()
+{
+    PatientRegistered?.Invoke(this, NewPatient);
+}
+
+// In the main view or other parts of the application
+var registrationViewModel = new PatientRegControlViewModel();
+registrationViewModel.PatientRegistered += (s, patient) =>
+{
+    // Add patient to another view model's list or handle the update
+    appointmentViewModel.Patients.Add(patient);
+};
+```
+
+This setup minimizes code in the view’s code-behind and keeps data management and logic within the view models, promoting a clean MVVM structure. Let me know if you need more specific guidance on any of these parts!
