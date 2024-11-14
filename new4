@@ -1,1 +1,213 @@
 
+To separate the `ViewModel` for each UserControl and keep the `MainWindow.xaml.cs` empty of `ViewModel` references, we will:
+
+1. Create individual `ViewModel` classes for each UserControl (Registration, Appointment Confirmation, and Dashboard).
+2. Set up `MainWindow` to dynamically switch UserControls without directly managing `ViewModel` instances.
+3. Adjust each UserControl’s code-behind to use its respective `ViewModel` and handle events accordingly.
+
+Here is how the code will look after these changes.
+
+### 1. Create Separate ViewModels
+
+**PatientRegistrationViewModel.cs**
+```csharp
+using System;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientRegistrationViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        public event EventHandler<Patient> PatientRegistered;
+
+        private string _registrationMessage;
+        public string RegistrationMessage
+        {
+            get => _registrationMessage;
+            set
+            {
+                _registrationMessage = value;
+                OnPropertyChanged(nameof(RegistrationMessage));
+            }
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void RegisterPatient(Patient patient)
+        {
+            // Logic to register patient
+            RegistrationMessage = $"Patient {patient.Name} Registered";
+            PatientRegistered?.Invoke(this, patient);
+        }
+    }
+}
+```
+
+**AppointmentConfirmationViewModel.cs**
+```csharp
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class AppointmentConfirmationViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        public event EventHandler AppointmentConfirmed;
+
+        public ObservableCollection<Patient> Patients { get; set; } = new ObservableCollection<Patient>();
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void ConfirmAppointments()
+        {
+            AppointmentConfirmed?.Invoke(this, EventArgs.Empty);
+        }
+    }
+}
+```
+
+**PatientDashboardViewModel.cs**
+```csharp
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientDashboardViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ObservableCollection<Patient> ConfirmedPatients { get; set; } = new ObservableCollection<Patient>();
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
+```
+
+### 2. Modify `MainWindow.xaml.cs`
+
+In `MainWindow.xaml.cs`, we’ll remove all `ViewModel` logic and replace it with dynamic loading of UserControls.
+
+```csharp
+using System.Windows;
+
+namespace PatientApp
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void btnRegistration_Click(object sender, RoutedEventArgs e)
+        {
+            var registrationControl = new PatientRegControl();
+            MainContent.Content = registrationControl;
+        }
+
+        private void btnAppointment_Click(object sender, RoutedEventArgs e)
+        {
+            var appointmentControl = new AppointmentConfirmationControl();
+            MainContent.Content = appointmentControl;
+        }
+
+        private void btnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            var dashboardControl = new PatientDashboardControl();
+            MainContent.Content = dashboardControl;
+        }
+    }
+}
+```
+
+### 3. Update UserControls to Use Their ViewModels
+
+**PatientRegControl.xaml.cs**
+```csharp
+using System;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class PatientRegControl : UserControl
+    {
+        private PatientRegistrationViewModel _viewModel;
+
+        public PatientRegControl()
+        {
+            InitializeComponent();
+            _viewModel = new PatientRegistrationViewModel();
+            DataContext = _viewModel;
+        }
+
+        private void btnRegister_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            // Code to gather input data and register patient
+        }
+    }
+}
+```
+
+**AppointmentConfirmationControl.xaml.cs**
+```csharp
+using System;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class AppointmentConfirmationControl : UserControl
+    {
+        private AppointmentConfirmationViewModel _viewModel;
+
+        public AppointmentConfirmationControl()
+        {
+            InitializeComponent();
+            _viewModel = new AppointmentConfirmationViewModel();
+            DataContext = _viewModel;
+        }
+
+        private void btnConfirm_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            _viewModel.ConfirmAppointments();
+        }
+    }
+}
+```
+
+**PatientDashboardControl.xaml.cs**
+```csharp
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class PatientDashboardControl : UserControl
+    {
+        private PatientDashboardViewModel _viewModel;
+
+        public PatientDashboardControl()
+        {
+            InitializeComponent();
+            _viewModel = new PatientDashboardViewModel();
+            DataContext = _viewModel;
+        }
+    }
+}
+```
+
+With this setup:
+- `MainWindow.xaml.cs` is simplified to load only UserControls.
+- Each UserControl has its own `ViewModel`, keeping logic isolated.
+- Events and data-binding remain in each respective `ViewModel`.
