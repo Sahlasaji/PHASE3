@@ -1,3 +1,4 @@
+in the project below, while i run the project,after registration it is not showing in appointment confirmation usercontrol and displaying dashboard usercontrol
 using System;
 using System.Collections.Generic;
 using System.Linq;
