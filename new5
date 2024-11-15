@@ -117,11 +117,52 @@ namespace PatientApp
 
         private void btnRegister_Click(object sender, RoutedEventArgs e)
         {
-            // Input validation (same as before)
-            // ...
+             string name = NameTextBox.Text.Trim();
+            string address = AddressTextBox.Text.Trim();
+            DateTime? dateOfBirth = DOBPicker.SelectedDate;
+            string slot = (SlotComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+            
+            DateTime? bookingDate = BookingDatePicker.SelectedDate;
+
+            // Validate Name
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                MessageBox.Show("Please enter a valid name.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Validate Age
+            if (!int.TryParse(AgeTextBox.Text, out int age) || age <= 0)
+            {
+                MessageBox.Show("Please enter a valid age (positive integer).", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Validate Date of Birth
+            if (!dateOfBirth.HasValue)
+            {
+                MessageBox.Show("Please select a valid date of birth.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Validate Slot
+            if (string.IsNullOrWhiteSpace(slot))
+            {
+                MessageBox.Show("Please select a time slot.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Validate Address
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                MessageBox.Show("Please enter a valid address.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+
 
             // Register the patient
-            _viewModel.RegisterPatient(name, age, dateOfBirth, address, slot, bookingDate);
+            _viewModel.RegisterPatient(patient);
             RegistrationCompleted?.Invoke(this, EventArgs.Empty);
             NavigateToAppointment?.Invoke(this, EventArgs.Empty);
         }
@@ -253,7 +294,8 @@ namespace PatientApp
 
         private void UnsubscribeEvents()
         {
-            // Unsubscribe from any events if necessary
+           _viewModel.OnPatientRegistered -= OnPatientRegistered;
+            _viewModel.OnAppointmentConfirmed -= OnAppointmentConfirmed;
         }
 
         private void btnRegistration_Click(object sender, RoutedEventArgs e)
