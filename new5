@@ -1,1 +1,54 @@
+using System.Windows;
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class AppointmentConfirmationControl : UserControl
+    {
+        private AppointmentConfirmationViewModel _viewModel;
+
+        public AppointmentConfirmationControl(PatientViewModel mainViewModel)
+        {
+            InitializeComponent();
+            _viewModel = new AppointmentConfirmationViewModel(mainViewModel);
+            DataContext = _viewModel;
+        }
+
+        private void btnConfirm_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedPatients = new List<Patient>();
+            for (int i = PatientsListBox.Items.Count - 1; i >= 0; i--)
+            {
+                CheckBox checkBox = PatientsListBox.Items[i] as CheckBox;
+                if (checkBox != null && checkBox.IsChecked == true && checkBox.Tag is Patient patient)
+                {
+                    selectedPatients.Add(patient);
+                    PatientsListBox.Items.RemoveAt(i);
+                }
+            }
+
+            _viewModel.ConfirmAppointment(selectedPatients);
+            // Optionally trigger navigation to the dashboard or show a message.
+        }
+    }
+}
+
+
+using System.Windows.Controls;
+
+namespace PatientApp
+{
+    public partial class PatientDashboardControl : UserControl
+    {
+        private PatientDashboardViewModel _viewModel;
+
+        public PatientDashboardControl(PatientViewModel mainViewModel)
+        {
+            InitializeComponent();
+            _viewModel = new PatientDashboardViewModel(mainViewModel);
+            DataContext = _viewModel;
+        }
+    }
+}
+
 
