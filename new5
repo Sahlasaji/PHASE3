@@ -1,1 +1,23 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
+namespace PatientApp
+{
+    public class PatientDashboardViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _mainViewModel;
+
+        public ObservableCollection<Patient> ConfirmedPatients => _mainViewModel.ConfirmedPatients;
+
+        public PatientDashboardViewModel(PatientViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
