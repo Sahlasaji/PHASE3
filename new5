@@ -1,1 +1,207 @@
+PatientRegViewModel.cs
 
+csharp
+
+Edit
+Copy code
+1using System;
+2using System.Windows.Input;
+3
+4namespace PatientApp
+5{
+6    public class PatientRegViewModel : INotifyPropertyChanged
+7    {
+8        private PatientViewModel _mainViewModel;
+9
+10        public string Name { get; set; }
+11        public int Age { get; set; }
+12        public string DateOfBirth { get; set; }
+13        public string Address { get; set; }
+14        public string Slot { get; set; }
+15        public DateTime? BookingDate { get; set; }
+16
+17        public ICommand RegisterCommand { get; }
+18
+19        public PatientRegViewModel(PatientViewModel mainViewModel)
+20        {
+21            _mainViewModel = mainViewModel;
+22            RegisterCommand = new RelayCommand(RegisterPatient);
+23        }
+24
+25        private void RegisterPatient()
+26        {
+27            var patient = new Patient
+28            {
+29                Name = Name,
+30                Age = Age,
+31                DateOfBirth = DateOfBirth,
+32                Address = Address,
+33                Slot = Slot,
+34                BookingDate = BookingDate?.ToString("yyyy-MM-dd")
+35            };
+36
+37            _mainViewModel.RegisterPatient(patient);
+38        }
+39
+40        public event PropertyChangedEventHandler PropertyChanged;
+41        protected void OnPropertyChanged(string propertyName)
+42        {
+43            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+44        }
+45    }
+46}
+AppointmentConfirmationViewModel.cs
+
+csharp
+
+Edit
+Copy code
+1using System.Collections.Generic;
+2using System.Windows.Input;
+3
+4namespace PatientApp
+5{
+6    public class AppointmentConfirmationViewModel : INotifyPropertyChanged
+7    {
+8        private PatientViewModel _mainViewModel;
+9
+10        public ICommand ConfirmAppointmentCommand { get; }
+11
+12        public AppointmentConfirmationViewModel(PatientViewModel mainViewModel)
+13        {
+14            _mainViewModel = mainViewModel;
+15            ConfirmAppointmentCommand = new RelayCommand(ConfirmAppointment);
+16        }
+17
+18        private void ConfirmAppointment(List<Patient> selectedPatients)
+19        {
+20            _mainViewModel.ConfirmPatients(selectedPatients);
+21        }
+22
+23        public event PropertyChangedEventHandler PropertyChanged;
+24        protected void OnPropertyChanged(string propertyName)
+25        {
+26            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+27        }
+28    }
+29}
+PatientDashboardViewModel.cs
+
+csharp
+
+Edit
+Copy code
+1using System.Collections.ObjectModel;
+2
+3namespace PatientApp
+4{
+5    public class PatientDashboardViewModel : INotifyPropertyChanged
+6    {
+7        private PatientViewModel _mainViewModel;
+8
+9        public ObservableCollection<Patient> ConfirmedPatients => _mainViewModel.ConfirmedPatients;
+10
+11        public PatientDashboardViewModel(PatientViewModel mainViewModel)
+12        {
+13            _mainViewModel = mainViewModel;
+14        }
+15
+16        public event PropertyChangedEventHandler PropertyChanged;
+17        protected void OnPropertyChanged(string propertyName)
+18        {
+19            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+20        }
+21    }
+22}
+2. Modify UserControl Code-Behind
+
+Update the code-behind of each UserControl to set the DataContext to the corresponding ViewModel.
+
+PatientRegControl.xaml.cs
+
+csharp
+
+Edit
+Copy code
+1public partial class PatientRegControl : UserControl
+2{
+3    private PatientRegViewModel _viewModel;
+4
+5    public PatientRegControl(PatientViewModel mainViewModel)
+6    {
+7        InitializeComponent();
+8        _viewModel = new PatientRegViewModel(mainViewModel);
+9        DataContext = _viewModel;
+10    }
+11}
+AppointmentConfirmationControl.xaml.cs
+
+csharp
+
+Edit
+Copy code
+1public partial class AppointmentConfirmationControl : UserControl
+2{
+3    private AppointmentConfirmationViewModel _viewModel;
+4
+5    public AppointmentConfirmationControl(PatientViewModel mainViewModel)
+6    {
+7        InitializeComponent();
+8        _viewModel = new AppointmentConfirmationViewModel(mainViewModel);
+9        DataContext = _viewModel;
+10    }
+11}
+PatientDashboardControl.xaml.cs
+
+csharp
+
+Edit
+Copy code
+1public partial class PatientDashboardControl : UserControl
+2{
+3    private PatientDashboardViewModel _viewModel;
+4
+5    public PatientDashboardControl(PatientViewModel mainViewModel)
+6    {
+7        InitializeComponent();
+8        _viewModel = new PatientDashboardViewModel(mainViewModel);
+9        DataContext = _viewModel;
+10    }
+11}
+3. Update XAML Bindings
+
+Now, update the XAML of each UserControl to bind the UI elements to the properties in the respective ViewModels.
+
+PatientRegControl.xaml
+
+xml
+
+Edit
+Copy code
+1<TextBox x:Name="NameTextBox" Text="{Binding Name}" Width="200" Canvas.Left="10" Canvas.Top="30"/>
+2<TextBox x:Name="AgeTextBox" Text="{Binding Age}" Width="200" Canvas.Left="10" Canvas.Top="90"/>
+3<DatePicker x:Name="DOBPicker" SelectedDate="{Binding DateOfBirth}" Canvas.Left="10" Canvas.Top="331"/>
+4<TextBox x:Name="AddressTextBox" Text="{Binding Address}" Width="200" Canvas.Left="10" Canvas.Top="210"/>
+5<ComboBox x:Name="SlotComboBox" SelectedItem="{Binding Slot}" Width="200" Canvas.Left="10" Canvas.Top="270">
+6    <ComboBoxItem Content="Morning"/>
+7    <ComboBoxItem Content="Evening"/>
+8</ComboBox>
+9<DatePicker x:Name="BookingDatePicker" SelectedDate="{Binding BookingDate}" Canvas.Left="10" Canvas.Top="151"/>
+10<Button x:Name="btnRegister" Content="Register" Width="100" Canvas.Left="10" Canvas.Top="380" Command="{Binding RegisterCommand}"/>
+AppointmentConfirmationControl.xaml
+
+xml
+
+Edit
+Copy code
+1<Button x:Name="btnConfirm" Content="Confirm Appointment" Margin="0,20,0,0" Command="{Binding ConfirmAppointmentCommand}"/>
+PatientDashboardControl.xaml
+
+xml
+
+Edit
+Copy code
+1<DataGrid x:Name="grdPatients" ItemsSource="{Binding ConfirmedPatients}" AutoGenerateColumns="True"/>
+Conclusion
+
+By following these steps, you have successfully created separate ViewModels for each UserControl, keeping the code-behind clean and adhering to the MVVM pattern. This structure enhances maintainability and testability, allowing for easier updates and modifications in the future.
