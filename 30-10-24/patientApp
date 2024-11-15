@@ -1,4 +1,4 @@
-in this i want to create separate viewmodel for all the usercontrol and need to keep the .cs file of all usercontrol to be empty,without changing the overall logic of the code, i need to change this 
+ 
 using System;
 using System.Collections.Generic;
 using System.Linq;
