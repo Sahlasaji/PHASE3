@@ -51,4 +51,45 @@ namespace PatientApp
     }
 }
 
+using System.Windows;
 
+namespace PatientApp
+{
+    public partial class MainWindow : Window
+    {
+        private PatientViewModel _viewModel;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            _viewModel = new PatientViewModel();
+            this.DataContext = _viewModel; // Set DataContext for potential bindings
+        }
+
+        private void btnRegistration_Click(object sender, RoutedEventArgs e)
+        {
+            var patientRegControl = new PatientRegControl(_viewModel);
+            patientRegControl.RegistrationCompleted += (s, args) => ShowMessage($"Patient {args} registered!");
+            patientRegControl.NavigateToAppointment += (s, args) => ShowAppointmentConfirmation();
+            MainContent.Content = patientRegControl;
+        }
+
+        private void ShowAppointmentConfirmation()
+        {
+            var appointmentControl = new AppointmentConfirmationControl(_viewModel);
+            appointmentControl.AppointmentCompleted += (s, args) => ShowMessage("Appointment confirmed successfully.");
+            MainContent.Content = appointmentControl;
+        }
+
+        private void btnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            var patientDashboardControl = new PatientDashboardControl(_viewModel);
+            MainContent.Content = patientDashboardControl;
+        }
+
+        private void ShowMessage(string message)
+        {
+            MessageBox.Show(message, "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+}
