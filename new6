@@ -1,1 +1,546 @@
+To refactor your project so that each `UserControl` has its own `ViewModel`, and to keep the `.cs` files (for `MainWindow` and `UserControls`) free of logic, you can implement the following changes while preserving the functionality of your application. Here's the plan and the updated implementation:
 
+---
+
+### **Steps**
+
+1. **Separate ViewModels for Each UserControl**:
+   - Create a new `ViewModel` for each `UserControl` (`PatientRegViewModel`, `AppointmentConfirmationViewModel`, `PatientDashboardViewModel`).
+
+2. **RelayCommand Implementation**:
+   - Use `RelayCommand` for command bindings to handle button clicks.
+
+3. **DataContext Binding**:
+   - Bind `DataContext` of `UserControl` to its respective `ViewModel`.
+
+4. **Update Main ViewModel (`PatientViewModel`)**:
+   - Keep `PatientViewModel` as the main orchestrating ViewModel and pass relevant data to each `ViewModel`.
+
+5. **Remove Code-Behind Logic**:
+   - Shift event handlers and button click logic to ViewModels using bindings and commands.
+
+---
+
+### **RelayCommand Implementation**
+
+Create a reusable `RelayCommand` for handling commands.
+
+```csharp
+using System;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class RelayCommand : ICommand
+    {
+        private readonly Action<object> _execute;
+        private readonly Predicate<object> _canExecute;
+
+        public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+        {
+            _execute = execute;
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
+
+        public void Execute(object parameter) => _execute(parameter);
+
+        public event EventHandler CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+    }
+}
+```
+
+---
+
+### **Updated `PatientViewModel`**
+
+```csharp
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientViewModel : INotifyPropertyChanged, IPatient
+    {
+        public ObservableCollection<Patient> Patients { get; private set; }
+        public ObservableCollection<Patient> ConfirmedPatients { get; private set; }
+
+        private string _registrationMessage;
+        public string RegistrationMessage
+        {
+            get => _registrationMessage;
+            set
+            {
+                _registrationMessage = value;
+                OnPropertyChanged(nameof(RegistrationMessage));
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public PatientViewModel()
+        {
+            Patients = new ObservableCollection<Patient>();
+            ConfirmedPatients = new ObservableCollection<Patient>();
+        }
+
+        public void RegisterPatient(Patient patient)
+        {
+            Patients.Add(patient);
+            RegistrationMessage = $"Patient {patient.Name} Registered Successfully!";
+        }
+
+        public void ConfirmPatients(ObservableCollection<Patient> selectedPatients)
+        {
+            foreach (var patient in selectedPatients)
+            {
+                ConfirmedPatients.Add(patient);
+                Patients.Remove(patient);
+            }
+        }
+
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+```
+
+---
+
+### **New ViewModels**
+
+#### **PatientRegViewModel**
+
+```csharp
+using System;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class PatientRegViewModel
+    {
+        private readonly PatientViewModel _mainViewModel;
+
+        public ICommand RegisterPatientCommand { get; }
+
+        public PatientRegViewModel(PatientViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+            RegisterPatientCommand = new RelayCommand(RegisterPatient);
+        }
+
+        private void RegisterPatient(object parameter)
+        {
+            var patient = parameter as Patient;
+            if (patient != null)
+            {
+                _mainViewModel.RegisterPatient(patient);
+            }
+        }
+    }
+}
+```
+
+#### **AppointmentConfirmationViewModel**
+
+```csharp
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class AppointmentConfirmationViewModel
+    {
+        private readonly PatientViewModel _mainViewModel;
+
+        public ObservableCollection<Patient> Patients => _mainViewModel.Patients;
+        public ICommand ConfirmAppointmentCommand { get; }
+
+        public AppointmentConfirmationViewModel(PatientViewModel mainViewModel)
+        {
+            _mainViewModel = mainViewModel;
+            ConfirmAppointmentCommand = new RelayCommand(ConfirmAppointment);
+        }
+
+        private void ConfirmAppointment(object parameter)
+        {
+            var selectedPatients = parameter as ObservableCollection<Patient>;
+            if (selectedPatients != null)
+            {
+                _mainViewModel.ConfirmPatients(selectedPatients);
+            }
+        }
+    }
+}
+```
+
+#### **PatientDashboardViewModel**
+
+```csharp
+namespace PatientApp
+{
+    public class PatientDashboardViewModel
+    {
+        public ObservableCollection<Patient> ConfirmedPatients { get; }
+
+        public PatientDashboardViewModel(PatientViewModel mainViewModel)
+        {
+            ConfirmedPatients = mainViewModel.ConfirmedPatients;
+        }
+    }
+}
+```
+
+---
+
+### **MainWindow.xaml.cs**
+
+The logic for switching views will now reside in `PatientViewModel`.
+
+---
+
+### **Binding in XAML**
+
+Bind the `DataContext` of `UserControls` to their respective ViewModels in `MainWindow.xaml`.
+
+```xml
+<ContentControl x:Name="MainContent" Content="{Binding SelectedViewModel}" />
+```
+
+---
+
+
+Here's how you can update the **XAML** to integrate the new `ViewModels` and handle `UserControl` switching.
+
+---
+
+### **MainWindow.xaml**
+
+Bind the `ContentControl` to a `SelectedViewModel` property in the `PatientViewModel`. This property will determine which `UserControl` to display.
+
+```xml
+<Window x:Class="PatientApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:PatientApp"
+        Title="Patient Application" Height="450" Width="800">
+    <Grid>
+        <!-- Navigation Panel -->
+        <StackPanel Orientation="Vertical" Width="200" Background="LightGray">
+            <Button Content="Patient Registration"
+                    Command="{Binding ShowPatientRegistrationCommand}" />
+            <Button Content="Appointment Confirmation"
+                    Command="{Binding ShowAppointmentConfirmationCommand}" />
+            <Button Content="Patient Dashboard"
+                    Command="{Binding ShowPatientDashboardCommand}" />
+        </StackPanel>
+
+        <!-- Main Content Area -->
+        <ContentControl Content="{Binding SelectedViewModel}" Margin="210,0,0,0" />
+    </Grid>
+</Window>
+```
+
+---
+
+### **MainWindow.xaml.cs**
+
+This file will only initialize the `DataContext`:
+
+```csharp
+namespace PatientApp
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+            DataContext = new PatientViewModel();
+        }
+    }
+}
+```
+
+---
+
+### **Updated `PatientViewModel`**
+
+Add properties and commands for switching views.
+
+```csharp
+using System.ComponentModel;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class PatientViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private object _selectedViewModel;
+        public object SelectedViewModel
+        {
+            get => _selectedViewModel;
+            set
+            {
+                _selectedViewModel = value;
+                OnPropertyChanged(nameof(SelectedViewModel));
+            }
+        }
+
+        public ICommand ShowPatientRegistrationCommand { get; }
+        public ICommand ShowAppointmentConfirmationCommand { get; }
+        public ICommand ShowPatientDashboardCommand { get; }
+
+        public PatientViewModel()
+        {
+            // Initialize commands
+            ShowPatientRegistrationCommand = new RelayCommand(_ => ShowPatientRegistration());
+            ShowAppointmentConfirmationCommand = new RelayCommand(_ => ShowAppointmentConfirmation());
+            ShowPatientDashboardCommand = new RelayCommand(_ => ShowPatientDashboard());
+
+            // Set default view
+            ShowPatientRegistration();
+        }
+
+        private void ShowPatientRegistration()
+        {
+            SelectedViewModel = new PatientRegViewModel(this);
+        }
+
+        private void ShowAppointmentConfirmation()
+        {
+            SelectedViewModel = new AppointmentConfirmationViewModel(this);
+        }
+
+        private void ShowPatientDashboard()
+        {
+            SelectedViewModel = new PatientDashboardViewModel(this);
+        }
+
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+```
+
+---
+
+### **Patient Registration UserControl**
+
+#### **PatientRegistration.xaml**
+
+```xml
+<UserControl x:Class="PatientApp.PatientRegistration"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="20">
+        <TextBlock Text="Patient Registration" FontSize="20" Margin="0,0,0,10" />
+        
+        <TextBox x:Name="PatientName" PlaceholderText="Enter Patient Name" Margin="0,0,0,10" />
+        
+        <Button Content="Register"
+                Command="{Binding RegisterPatientCommand}"
+                CommandParameter="{Binding ElementName=PatientName, Path=Text}" />
+        
+        <TextBlock Text="{Binding Path=RegistrationMessage}" Foreground="Green" Margin="0,10,0,0" />
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+### **Other UserControls**
+
+Repeat similar patterns for other `UserControls` (e.g., Appointment Confirmation and Dashboard).
+
+---
+
+### **How it Works**
+
+1. **Navigation Buttons**:
+   - Clicking a button like "Patient Registration" triggers the corresponding command in `PatientViewModel`.
+   - The `SelectedViewModel` is updated, which changes the `ContentControl`'s content.
+
+2. **UserControl ViewModels**:
+   - Each `UserControl` has its own `ViewModel` bound through `DataContext`.
+
+3. **Centralized Data Handling**:
+   - `PatientViewModel` manages all data and passes it to individual `ViewModels` as needed.
+
+---
+
+Let me know if you'd like detailed examples for the remaining `UserControls`!
+
+
+Here's how you can implement the remaining **UserControls** with their respective `ViewModels` and integrate them with the navigation system.
+
+---
+
+### **Appointment Confirmation UserControl**
+
+#### **AppointmentConfirmation.xaml**
+
+```xml
+<UserControl x:Class="PatientApp.AppointmentConfirmation"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="20">
+        <TextBlock Text="Appointment Confirmation" FontSize="20" Margin="0,0,0,10" />
+
+        <TextBox x:Name="AppointmentId" PlaceholderText="Enter Appointment ID" Margin="0,0,0,10" />
+        <Button Content="Confirm Appointment"
+                Command="{Binding ConfirmAppointmentCommand}"
+                CommandParameter="{Binding ElementName=AppointmentId, Path=Text}" />
+        
+        <TextBlock Text="{Binding Path=ConfirmationMessage}" Foreground="Blue" Margin="0,10,0,0" />
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+#### **AppointmentConfirmationViewModel**
+
+```csharp
+using System.ComponentModel;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class AppointmentConfirmationViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string ConfirmationMessage { get; private set; }
+        public ICommand ConfirmAppointmentCommand { get; }
+
+        private readonly PatientViewModel _parentViewModel;
+
+        public AppointmentConfirmationViewModel(PatientViewModel parentViewModel)
+        {
+            _parentViewModel = parentViewModel;
+
+            // Command to handle confirmation logic
+            ConfirmAppointmentCommand = new RelayCommand(param => ConfirmAppointment(param?.ToString()));
+        }
+
+        private void ConfirmAppointment(string appointmentId)
+        {
+            if (!string.IsNullOrWhiteSpace(appointmentId))
+            {
+                ConfirmationMessage = $"Appointment {appointmentId} confirmed successfully!";
+            }
+            else
+            {
+                ConfirmationMessage = "Invalid Appointment ID.";
+            }
+            OnPropertyChanged(nameof(ConfirmationMessage));
+        }
+
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+}
+```
+
+---
+
+### **Patient Dashboard UserControl**
+
+#### **PatientDashboard.xaml**
+
+```xml
+<UserControl x:Class="PatientApp.PatientDashboard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="20">
+        <TextBlock Text="Patient Dashboard" FontSize="20" Margin="0,0,0,10" />
+
+        <ListView ItemsSource="{Binding Patients}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" />
+                    <GridViewColumn Header="Age" DisplayMemberBinding="{Binding Age}" />
+                    <GridViewColumn Header="Disease" DisplayMemberBinding="{Binding Disease}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+#### **PatientDashboardViewModel**
+
+```csharp
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace PatientApp
+{
+    public class PatientDashboardViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ObservableCollection<Patient> Patients { get; private set; }
+
+        private readonly PatientViewModel _parentViewModel;
+
+        public PatientDashboardViewModel(PatientViewModel parentViewModel)
+        {
+            _parentViewModel = parentViewModel;
+
+            // Load some dummy data
+            LoadPatients();
+        }
+
+        private void LoadPatients()
+        {
+            Patients = new ObservableCollection<Patient>
+            {
+                new Patient { Name = "John Doe", Age = 30, Disease = "Flu" },
+                new Patient { Name = "Jane Smith", Age = 25, Disease = "Cold" },
+                new Patient { Name = "David Johnson", Age = 45, Disease = "Diabetes" }
+            };
+            OnPropertyChanged(nameof(Patients));
+        }
+
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public class Patient
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public string Disease { get; set; }
+    }
+}
+```
+
+---
+
+### **Integrating Everything**
+
+1. **Update `PatientViewModel`**:
+   - These changes have already been made in the previous step to include commands for switching between `UserControls`.
+
+2. **Navigation Flow**:
+   - Each button triggers a command in `PatientViewModel`.
+   - The `SelectedViewModel` is updated to the corresponding ViewModel (`PatientRegViewModel`, `AppointmentConfirmationViewModel`, or `PatientDashboardViewModel`).
+
+3. **Dynamic Binding**:
+   - The `ContentControl` dynamically switches its content based on the `SelectedViewModel`.
+
+---
+
+This setup ensures each `UserControl` has a dedicated `ViewModel`, adhering to the **MVVM** pattern. Let me know if you'd like more examples or enhancements!
+
+Would you like me to continue with XAML updates and implementation of commands in the remaining `UserControls`?
