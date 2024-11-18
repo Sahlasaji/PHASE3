@@ -1,4 +1,4 @@
-i need to create separate view model for all the usercontrols,can use relaycommand,without changing the logic of the code, i need to include these chnges, also i need to keep the .cs file of usercontrols and mainwindow.cs to be free from logics and codes 
+i need to create separate view model for all the usercontrols,i need to keep my patientviewmodel as mainviewmodel,can use relaycommand,without changing the logic of the code, i need to include these chnges, also i need to keep the .cs file of usercontrols and mainwindow.cs to be free from logics and codes 
 using System;
 using System.Collections.Generic;
 using System.Linq;
