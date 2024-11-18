@@ -1,1 +1,360 @@
+Models: The PatientModel class holds the data for each patient.
+ViewModel: The PatientViewModel manages the application state, handles commands, and raises events to notify the UI of changes.
+Commands: The RelayCommand class allows for easy binding of UI actions (like button clicks) to methods in the ViewModel.
+User Controls: Each user control (e.g., PatientRegistrationControl, AppointmentControl, PatientDashboardControl) is responsible for a specific part of the UI and interacts with the ViewModel to display and update data.
+Event Handling: Events like PatientRegistered and AppointmentUpdated facilitate communication between the ViewModel and the user controls, allowing them to respond to changes in the application state.
+Conclusion
+The Patient Admission Application effectively demonstrates the MVVM pattern by separating concerns between the UI (View), the data (Model), and the logic (ViewModel). This structure allows for easier maintenance, testing, and scalability of the application.
 
+User Experience: The application provides a smooth user experience by allowing users to register patients, confirm appointments, and view patient information through a clean and organized interface.
+Data Binding: WPF's data binding capabilities are leveraged to keep the UI in sync with the underlying data model, ensuring that changes in the ViewModel are automatically reflected in the UI.
+
+
+
+Workflow Overview
+The Patient Admission Application is designed to manage patient registrations, appointment confirmations, and provide a dashboard for viewing patient information. The application follows the MVVM (Model-View-ViewModel) pattern, which separates the user interface from the business logic, making the application easier to maintain and test.
+
+Key Components
+Model (PatientModel):
+
+Represents a patient with properties such as Name, Age, Dateofbirth, Address, BookingDate, AppointmentDate, ConfirmationStatus, and Slot.
+This class serves as the data structure for patient information.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class PatientModel
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public DateTime Dateofbirth { get; set; } = DateTime.Now;
+    public string Address { get; set; }
+    public string BookingDate { get; set; }
+    public string AppointmentDate { get; set; } 
+    public string ConfirmationStatus { get; set; } = "Pending";
+    public string Slot { get; set; }
+}
+Interface (IPatient):
+
+Defines the contract for patient management, including a collection of patients and methods for registering patients and sending updates.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public interface IPatient
+{
+    ObservableCollection<PatientModel> Patients { get; }
+    void RegisterPatient(object parameter);
+    void SendUpdate(object parameter);
+}
+RelayCommand:
+
+Implements the ICommand interface to facilitate command binding in WPF. It allows actions to be executed in response to user interactions, such as button clicks.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class RelayCommand : ICommand
+{
+    private readonly Action<object> _execute;
+    private readonly Predicate<object> _canExecute;
+
+    public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+    {
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        _canExecute = canExecute;
+    }
+
+    public bool CanExecute(object parameter)
+    {
+        return _canExecute == null || _canExecute(parameter);
+    }
+
+    public void Execute(object parameter)
+    {
+        _execute(parameter);
+    }
+
+    public event EventHandler CanExecuteChanged
+    {
+        add { CommandManager.RequerySuggested += value; }
+        remove { CommandManager.RequerySuggested -= value; }
+    }
+}
+ViewModel (PatientViewModel):
+
+Manages the state of the application and acts as a bridge between the View and the Model. It contains commands for showing different views, registering patients, and sending updates.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public class PatientViewModel : BaseViewModel, IPatient
+{
+    public ObservableCollection<PatientModel> Patients { get; set; } = new ObservableCollection<PatientModel>();
+    public ObservableCollection<PatientModel> ConfirmedPatients { get; set; } = new ObservableCollection<PatientModel>();
+    public ICommand RegisterPatientCommand { get; set; }
+    public ICommand SendUpdateCommand { get; set; }
+
+    public PatientViewModel(MainWindow mainWindow)
+    {
+        // Initialize commands
+        RegisterPatientCommand = new RelayCommand(RegisterPatient);
+        SendUpdateCommand = new RelayCommand(SendUpdate);
+    }
+
+    public void RegisterPatient(object parameter)
+    {
+        // Logic to register a patient
+    }
+
+    public void SendUpdate(object parameter)
+    {
+        // Logic to send updates for the selected patient
+    }
+}
+User Controls:
+
+PatientRegistrationControl: Handles patient registration. It collects patient information through input fields and binds the data to the NewPatient property in the ViewModel.
+AppointmentControl: Displays registered patients and allows the user to confirm appointments. It binds to the Patients collection in the ViewModel.
+PatientDashboardControl: Displays a dashboard with confirmed patients and their details.
+Main Window
+The MainWindow serves as the entry point of the application. It contains buttons for navigation and a content area to display different user controls based on user actions.
+
+xml
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+<Window x:Class="PatientAdmissionApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        Title="PatientAdmission" Height="450" Width="800">
+    <Grid>
+        <DockPanel>
+            <StackPanel>
+                <Button Content="Patient Registration" Command="{Binding ShowRegistrationCommand}" />
+                <Button Content="Appointment Confirmation" Command="{Binding ShowAppointmentCommand}" />
+                <Button Content="Patient Dashboard" Command="{Binding ShowDashboardCommand}" />
+
+continue
+
+
+Certainly! Let's continue with the explanation of the MainWindow and how it integrates with the rest of the application.
+
+Main Window (Continued)
+The MainWindow contains a DockPanel that organizes the layout into a navigation area and a content area. The navigation area includes buttons that are bound to commands in the PatientViewModel, allowing users to switch between different functionalities of the application.
+
+Here’s the complete XAML for the MainWindow:
+
+xml
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+<Window x:Class="PatientAdmissionApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PatientAdmission" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0" Margin="20,20,0,20">
+            <StackPanel>
+                <Button Content="Patient Registration" Width="160" Height="40" Margin="0,10" Command="{Binding ShowRegistrationCommand}" />
+                <Button Content="Appointment Confirmation" Width="160" Height="40" Margin="0,10" Command="{Binding ShowAppointmentCommand}" />
+                <Button Content="Patient Dashboard" Width="160" Height="40" Margin="0,10" Command="{Binding ShowDashboardCommand}" />
+                <Button Content="Exit" Width="160" Height="40" Margin="0,10" Command="{Binding ExitCommand}" />
+            </StackPanel>
+        </DockPanel>
+
+        <ContentControl x:Name="MainContent" Grid.Column="1" Margin="20" />
+    </Grid>
+</Window>
+Code Behind for MainWindow
+In the code-behind file (MainWindow.xaml.cs), the MainWindow initializes the PatientViewModel and sets it as the DataContext. This allows the bindings in the XAML to access properties and commands defined in the ViewModel.
+
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public partial class MainWindow : Window
+{
+    private PatientViewModel _viewModel;
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        _viewModel = new PatientViewModel(this);
+        DataContext = _viewModel; // Set the DataContext for binding
+    }
+}
+Workflow of the Application
+Application Start:
+
+When the application starts, the MainWindow is displayed. The PatientViewModel is instantiated, and its commands are bound to the buttons in the navigation panel.
+Navigating to Patient Registration:
+
+When the user clicks the "Patient Registration" button, the ShowRegistrationCommand is executed. This command switches the content of the MainContent area to the PatientRegistrationControl, allowing the user to enter patient details.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private void ShowRegistration(object parameter)
+{
+    _mainWindow.MainContent.Content = registrationControl; // Switch to Registration control
+}
+Registering a Patient:
+
+In the PatientRegistrationControl, the user fills out the patient details and clicks the "Register" button. This button is bound to the RegisterPatientCommand in the ViewModel.
+The RegisterPatient method in the ViewModel is called, which validates the input and adds the new patient to the Patients collection.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void RegisterPatient(object parameter)
+{
+    if (!string.IsNullOrEmpty(NewPatient.Name) && NewPatient.Dateofbirth != default)
+    {
+        Patients.Add(new PatientModel
+        {
+            Name = NewPatient.Name,
+            Dateofbirth = NewPatient.Dateofbirth,
+            Age = DateTime.Now.Year - NewPatient.Dateofbirth.Year,
+            Address = NewPatient.Address,
+            Slot = NewPatient.Slot,
+            BookingDate = NewPatient.BookingDate
+        });
+        PatientUpdated?.Invoke(this, NewPatient); // Notify other controls
+        NewPatient = new PatientModel(); // Reset for new entry
+    }
+    else
+    {
+        MessageBox.Show("Please provide valid patient details.");
+    }
+}
+Appointment Confirmation:
+
+After registration, the user can navigate to the "Appointment Confirmation" control. Here, they can select a registered patient and set the appointment date and confirmation status.
+When the user clicks the "Send Update" button, the SendUpdateCommand is executed, which updates the selected patient's confirmation status and appointment date.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void SendUpdate(object parameter)
+{
+    if (SelectedPatient != null)
+    {
+        SelectedPatient.ConfirmationStatus = NewPatient.ConfirmationStatus;
+        SelectedPatient.AppointmentDate = NewPatient.AppointmentDate;
+        AppointmentUpdated?.Invoke(this, EventArgs.Empty
+
+continu
+
+
+Certainly! Let's continue with the explanation of the workflow, particularly focusing on the appointment confirmation process and how the application handles updates and displays information.
+
+Continuing the Workflow
+Sending Appointment Updates:
+
+When the user clicks the "Send Update" button in the AppointmentControl, the SendUpdateCommand is executed. This command updates the selected patient's confirmation status and appointment date.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void SendUpdate(object parameter)
+{
+    if (SelectedPatient != null)
+    {
+        SelectedPatient.ConfirmationStatus = NewPatient.ConfirmationStatus;
+        SelectedPatient.AppointmentDate = NewPatient.AppointmentDate;
+        AppointmentUpdated?.Invoke(this, EventArgs.Empty); // Notify that an appointment has been updated
+    }
+    else
+    {
+        MessageBox.Show("Please select a Patient");
+    }
+}
+The AppointmentUpdated event is raised, which can be handled by other components (like the dashboard) to reflect the changes.
+Handling Appointment Updates:
+
+The OnAppointmentUpdated method is invoked when an appointment is confirmed. This method checks if the selected patient is not already in the ConfirmedPatients collection and adds them if they are not.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private void OnAppointmentUpdated(object sender, EventArgs e)
+{
+    if (SelectedPatient != null && !ConfirmedPatients.Contains(SelectedPatient))
+    {
+        ConfirmedPatients.Add(SelectedPatient); // Add to confirmed patients
+        MessageBox.Show($"Appointment Confirmed for {SelectedPatient.Name}"); // Notify user
+    }
+}
+Displaying Patient Information:
+
+The PatientUpdated event is used to notify other controls (like AppointmentControl and PatientDashboardControl) when a patient is registered or updated. Each control has a method (DisplayPatientName) that updates the UI to reflect the latest patient information.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+public void DisplayPatientName(object sender, PatientModel e)
+{
+    if (e != null)
+    {
+        lblPatientNameLabel.Content = $"Notification from Registration page - {e.Name}"; // Update label with patient name
+    }
+}
+Navigating to the Patient Dashboard:
+
+When the user clicks the "Patient Dashboard" button, the ShowDashboardCommand is executed, which switches the content area to the PatientDashboardControl. This control displays a list of confirmed patients.
+csharp
+
+Verify
+
+Open In Editor
+Edit
+Copy code
+private void ShowDashboard(object parameter)
+{
+    _mainWindow.MainContent.Content = dashboardControl; // Switch to Dashboard control
+}
+Summary of Key Components and Their Interactions
