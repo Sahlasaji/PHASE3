@@ -1,1 +1,103 @@
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace PatientApp
+{
+    public class PatientRegistrationViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _parentViewModel;
+
+        public PatientRegistrationViewModel(PatientViewModel parentViewModel)
+        {
+            _parentViewModel = parentViewModel;
+        }
+
+        public Patient Patient { get; set; }
+
+        public RelayCommand RegisterCommand => new RelayCommand(param => RegisterPatient());
+
+        private void RegisterPatient()
+        {
+            _parentViewModel.RegisterPatient(Patient);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
+
+
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace PatientApp
+{
+    public class AppointmentConfirmationViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _parentViewModel;
+
+        public AppointmentConfirmationViewModel(PatientViewModel parentViewModel)
+        {
+            _parentViewModel = parentViewModel;
+        }
+
+        public ObservableCollection<Patient> SelectedPatients { get; set; } = new ObservableCollection<Patient>();
+
+        public RelayCommand ConfirmCommand => new RelayCommand(param => ConfirmAppointment());
+
+        private void ConfirmAppointment()
+        {
+            _parentViewModel.ConfirmPatients(SelectedPatients.ToList());
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
+
+
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace PatientApp
+{
+    public class PatientDashboardViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _parentViewModel;
+
+        public PatientDashboardViewModel(PatientViewModel parentViewModel)
+        {
+            _parentViewModel = parentViewModel;
+        }
+
+        public ObservableCollection<Patient> Patients { get; set; } = new ObservableCollection<Patient>();
+
+        public PatientDashboardViewModel()
+        {
+            Patients.Add(new Patient { Name = "John Doe", Age = 30 });
+            Patients.Add(new Patient { Name = "Jane Doe", Age = 25 });
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}
+
+
 
