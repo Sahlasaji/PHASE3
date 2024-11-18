@@ -1,0 +1,530 @@
+using System;
+using System.Windows.Input;
+using PatientAdmissionApp;
+
+namespace PatientAdmissionApp
+{
+    public class RelayCommand : ICommand
+    {
+        private readonly Action<object> _execute;
+        private readonly Predicate<object> _canExecute;
+
+        public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute == null || _canExecute(parameter);
+        }
+
+        public void Execute(object parameter)
+        {
+            _execute(parameter);
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PatientAdmissionApp
+{
+    public interface IPatient
+    {
+        ObservableCollection<PatientModel> Patients { get; }
+       void RegisterPatient(object parameter);
+       void SendUpdate(object parameter);
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PatientAdmissionApp
+{
+    public class PatientModel
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public DateTime Dateofbirth { get; set; } = DateTime.Now;
+        public string Address { get; set; }
+        public string BookingDate { get; set; }
+        public string AppointmentDate { get; set; } 
+        public string ConfirmationStatus { get; set; } = "Pending";
+        public string Slot { get; set; }
+    }
+}
+<UserControl x:Class="PatientAdmissionApp.AppointmentControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PatientAdmissionApp" d:DataContext="{d:DesignInstance Type=local:PatientViewModel}"
+             mc:Ignorable="d" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="20">
+        <StackPanel>
+            <TextBlock Text="Appointment Confirmation" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Patient Name:"/>
+            <TextBox x:Name="PatientNameTextBox" Width="200" Text="{Binding SelectedPatient.Name}"/>
+
+            <TextBlock Text="Appointment Date:"/>
+            <DatePicker x:Name="AppointmentDatePicker" Width="200"  SelectedDate="{Binding NewPatient.AppointmentDate}"  SelectedDateFormat="Short"/>
+
+            <TextBlock Text="Confirmation Status:"/>
+            <ComboBox x:Name="StatusComboBox" Width="200" Text="{Binding NewPatient.ConfirmationStatus}">
+                <ComboBoxItem Content="Confirmed"/>
+                <ComboBoxItem Content="Pending"/>
+                <ComboBoxItem Content="Cancelled"/>
+            </ComboBox>
+
+            <Button Content="Send Update" Width="100" Height="30" Margin="0,10,0,0" Command="{Binding SendUpdateCommand}"/>
+            <Label x:Name="lblPatientNameLabel" Content="Patient Name" FontSize="16" Margin="10"/>
+
+
+            <TextBlock Text="Registered Patients" FontSize="16" FontWeight="Bold" Margin="0,20,0,5"/>
+            <DataGrid x:Name="PatientsDataGrid" AutoGenerateColumns="False" Height="200" Margin="0,10,0,0" ItemsSource="{Binding Patients}" SelectedItem="{Binding SelectedPatient, Mode=TwoWay}" SelectionChanged="PatientsDataGrid_SelectionChanged">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Patient Name" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Age" Binding="{Binding Age}" Width="*"/>
+                    <DataGridTextColumn Header="Booking Date" Binding="{Binding BookingDate}" Width="*"/>
+                    <DataGridTextColumn Header="Slot" Binding="{Binding Slot}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+    </Grid>
+
+</UserControl>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace PatientAdmissionApp
+{
+    /// <summary>
+    /// Interaction logic for AppointmentControl.xaml
+    /// </summary>
+    public partial class AppointmentControl : UserControl
+    {
+        public AppointmentControl()
+        {
+            InitializeComponent();
+            
+        }
+
+        public void DisplayPatientName(object sender, PatientModel e)
+        {
+            if (e != null)
+            {
+                lblPatientNameLabel.Content = $"  Notified From Registrationpage - {e.Name}";
+            }
+        }
+      
+        private void PatientsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+    }
+}
+<UserControl x:Class="PatientAdmissionApp.PatientDashboardControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PatientAdmissionApp"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="20">
+        <StackPanel>
+            <TextBlock Text="Patient Dashboard" FontSize="22" FontWeight="Bold" Margin="0,0,0,20"/>
+
+            <!-- Patients DataGrid -->
+            <DataGrid ItemsSource="{Binding ConfirmedPatients}" AutoGenerateColumns="False" Height="150">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
+                    <DataGridTextColumn Header="Age" Binding="{Binding Age}" />
+                    <DataGridTextColumn Header="Address" Binding="{Binding Address}" />
+                    <DataGridTextColumn Header="ConfirmationStatus" Binding="{Binding ConfirmationStatus}" />
+                    <DataGridTextColumn Header="AppointmentDate" Binding="{Binding AppointmentDate}" />
+                    
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Label x:Name="lblPatientNameLabel3" Content="Patient Name" FontSize="16" Margin="10"/>
+
+
+            <!-- Action Buttons -->
+            
+            <Button Content="Filter Records"  Width="150" Margin="0,10"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace PatientAdmissionApp
+{
+    /// <summary>
+    /// Interaction logic for PatientDashboardControl.xaml
+    /// </summary>
+    public partial class PatientDashboardControl : UserControl
+    {
+        public PatientDashboardControl()
+        {
+            InitializeComponent();
+
+        }
+        public void DisplayPatientName(object sender, PatientModel e)
+        {
+            if (e != null)
+            {
+                
+                lblPatientNameLabel3.Content = $" Notified From Registrationpage - {e.Name}";
+            }
+        }
+    }
+}
+<UserControl x:Class="PatientAdmissionApp.PatientRegistrationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PatientAdmissionApp" d:DataContext="{d:DesignInstance Type=local:PatientViewModel}"
+             mc:Ignorable="d" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DesignHeight="450" d:DesignWidth="800">
+   
+    <Grid>
+        <StackPanel Margin="20">
+            <TextBlock Text="Patient Registration" FontSize="20" FontWeight="Bold" />
+            <TextBlock Text="Name:"  />
+            <TextBox x:Name="NameTextBox" Text="{Binding NewPatient.Name}" />
+            <TextBlock Text="Date of Birth:" />
+            <DatePicker x:Name="DOBPicker" SelectedDate="{Binding NewPatient.Dateofbirth}"  SelectedDateFormat="Short" DisplayDateEnd="{x:Static sys:DateTime.Now}" />
+            
+            <TextBlock Text="Address:" />
+                <TextBox x:Name="AddressTextBox" Text="{Binding NewPatient.Address}"/>
+            <TextBlock Text="Slot:" />
+            <ComboBox x:Name="SlotComboBox" Text="{Binding NewPatient.Slot}"> 
+                <ComboBoxItem Content="Morning"  />
+                <ComboBoxItem Content="Evening" />
+            </ComboBox>
+
+
+
+            <TextBlock Text="Booking Date:" />
+            <DatePicker x:Name="BookingDatePicker" SelectedDateFormat="Short" SelectedDate="{Binding NewPatient.BookingDate}" DisplayDateStart="{x:Static sys:DateTime.Now}"/>
+            <Button Content="Register" Width="100" Height="30" Margin="0,10,0,0" Command="{Binding RegisterPatientCommand}" />
+            <Label x:Name="PatientNameLabel" Content="Patient Name" FontSize="16" Margin="10"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace PatientAdmissionApp
+{
+    /// <summary>
+    /// Interaction logic for PatientRegistrationControl.xaml
+    /// </summary>
+    public partial class PatientRegistrationControl : UserControl
+    {
+        public PatientRegistrationControl()
+        {
+            InitializeComponent();
+            
+        }
+        public void DisplayPatientName(object sender, PatientModel e)
+        {
+            if (e != null)
+            {
+                PatientNameLabel.Content = $"Notification from Registration page - {e.Name}";
+            }
+        }
+
+
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using System.ComponentModel;
+
+namespace PatientAdmissionApp
+{
+    public class BaseViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private object _currentView;
+        public object CurrentView
+        {
+            get { return _currentView; }
+            set { _currentView = value; OnPropertyChanged(nameof(CurrentView)); }
+        }
+    }
+}
+using System;
+using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Input;
+
+namespace PatientAdmissionApp
+{
+    public class PatientViewModel : BaseViewModel, IPatient
+    {
+        private MainWindow _mainWindow;
+
+        public event EventHandler AppointmentUpdated;
+        public event EventHandler PatientRegistered;
+        public event EventHandler<PatientModel> PatientUpdated;
+
+        public ICommand ShowRegistrationCommand { get; set; }
+        public ICommand ShowAppointmentCommand { get; set; }
+        public ICommand ShowDashboardCommand { get; set; }
+        public ICommand ExitCommand { get; set; }
+
+        private PatientRegistrationControl registrationControl;
+        private AppointmentControl appointmentControl;
+        private PatientDashboardControl dashboardControl;
+
+        public ObservableCollection<PatientModel> Patients { get; set; } = new ObservableCollection<PatientModel>();
+        public ObservableCollection<PatientModel> ConfirmedPatients { get; set; } = new ObservableCollection<PatientModel>();
+
+        private PatientModel _newPatient;
+        public PatientModel NewPatient
+        {
+            get { return _newPatient; }
+            set { _newPatient = value; OnPropertyChanged(); }
+        }
+
+        private PatientModel _selectedPatient;
+        public PatientModel SelectedPatient
+        {
+            get { return _selectedPatient; }
+            set { _selectedPatient = value; OnPropertyChanged(); }
+        }
+
+        private bool _selectedSlot;
+        public bool SelectedSlot
+        {
+            get { return _selectedSlot; }
+            set { _selectedSlot = value; OnPropertyChanged(nameof(SelectedSlot)); }
+        }
+       
+        public ICommand RegisterPatientCommand { get; set; }
+        public ICommand SendUpdateCommand { get; set; }
+
+        public PatientViewModel(MainWindow mainWindow)
+        {
+            _mainWindow = mainWindow;
+            NewPatient = new PatientModel();
+            ShowRegistrationCommand = new RelayCommand(ShowRegistration);
+            ShowAppointmentCommand = new RelayCommand(ShowAppointment);
+            ShowDashboardCommand = new RelayCommand(ShowDashboard);
+            ExitCommand = new RelayCommand(Exit);
+
+            // Initialize controls (if needed)
+            registrationControl = new PatientRegistrationControl();
+            appointmentControl = new AppointmentControl();
+            dashboardControl = new PatientDashboardControl();
+
+            RegisterPatientCommand = new RelayCommand(RegisterPatient);
+            SendUpdateCommand = new RelayCommand(SendUpdate);
+
+            PatientUpdated += registrationControl.DisplayPatientName;
+            PatientUpdated += appointmentControl.DisplayPatientName;
+            PatientUpdated += dashboardControl.DisplayPatientName;
+
+            PatientRegistered += OnPatientRegistered;
+            AppointmentUpdated += OnAppointmentUpdated;
+
+        }
+
+        public void RegisterPatient(object parameter)
+        {
+            PatientRegistered?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnPatientRegistered(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(NewPatient.Name) && NewPatient.Dateofbirth != default)
+            {
+                Patients.Add(new PatientModel
+                {
+                    Name = NewPatient.Name,
+                    Dateofbirth = NewPatient.Dateofbirth,
+                    Age = DateTime.Now.Year - NewPatient.Dateofbirth.Year,
+                    Address = NewPatient.Address,
+                    Slot = NewPatient.Slot,
+                    BookingDate = NewPatient.BookingDate
+                });
+                PatientUpdated?.Invoke(this, NewPatient);
+                NewPatient = new PatientModel();
+            }
+            else
+            {
+                MessageBox.Show("Please provide valid patient details.");
+            }
+        }
+
+
+        public void SendUpdate(object parameter)
+        {
+            if (SelectedPatient != null)
+            {
+                SelectedPatient.ConfirmationStatus = NewPatient.ConfirmationStatus;
+                SelectedPatient.AppointmentDate = NewPatient.AppointmentDate;
+                AppointmentUpdated?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                MessageBox.Show("Please select a Patient");
+            }
+        }
+
+        private void OnAppointmentUpdated(object sender, EventArgs e)
+        {
+            if (SelectedPatient != null && !ConfirmedPatients.Contains(SelectedPatient))
+            {
+                ConfirmedPatients.Add(SelectedPatient);
+                MessageBox.Show($"Appointment Confirmed for {SelectedPatient.Name}");
+            }
+        }
+
+        // Command method implementations
+        private void ShowRegistration(object parameter)
+        {
+            // Logic for showing the Registration control
+            // Switch MainContent to Registration control
+            _mainWindow.MainContent.Content = registrationControl;
+        }
+
+        private void ShowAppointment(object parameter)
+        {
+            // Logic for showing the Appointment control
+            // Switch MainContent to Appointment control
+            _mainWindow.MainContent.Content = appointmentControl;
+        }
+
+        private void ShowDashboard(object parameter)
+        {
+            // Logic for showing the Dashboard control
+            // Switch MainContent to Dashboard control
+            _mainWindow.MainContent.Content = dashboardControl;
+        }
+
+        private void Exit(object parameter)
+        {
+            // Logic to handle exit (close window, or some other action)
+            Application.Current.Shutdown();
+        }
+
+    }
+}
+<Window x:Class="PatientAdmissionApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PatientAdmissionApp"
+        mc:Ignorable="d"
+        Title="PatientAdmission" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <!-- Navigation Column -->
+            <ColumnDefinition Width="*" />
+            <!-- Content Column -->
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0" Margin="20,20,0,20" Grid.ColumnSpan="2" HorizontalAlignment="Left">
+            <StackPanel>
+                <!-- Button commands bound to ViewModel commands -->
+                <Button Content="Patient Registration" Width="160" Height="40" Margin="0,10" Command="{Binding ShowRegistrationCommand}" />
+                <Button Content="Appointment Confirmation" Width="160" Height="40" Margin="0,10" Command="{Binding ShowAppointmentCommand}" />
+                <Button Content="Patient Dashboard" Width="160" Height="40" Margin="0,10" Command="{Binding ShowDashboardCommand}" />
+                <Button Content="Exit" Width="160" Height="40" Margin="0,10" Command="{Binding ExitCommand}" />
+            </StackPanel>
+        </DockPanel>
+
+        <ContentControl x:Name="MainContent" Grid.Column="1" Margin="20" />
+    </Grid>
+
+</Window>
+using System.Windows;
+
+namespace PatientAdmissionApp
+{
+    public partial class MainWindow : Window
+    {
+        private PatientViewModel _viewModel;
+      
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            _viewModel = new PatientViewModel(this);
+            DataContext = _viewModel;
+        }
+    }
+}
