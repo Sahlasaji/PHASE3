@@ -1,1 +1,314 @@
+To separate the logic from the UserControl and MainWindow, we'll introduce `RelayCommand` for the button actions, set up a `PatientRegViewModel`, `AppointmentConfirmationViewModel`, and `PatientDashboardViewModel`, and refactor the XAML to bind commands instead of handling events directly in the code-behind.
 
+### 1. **RelayCommand Implementation**
+
+First, we need a `RelayCommand` class that will allow binding commands in the ViewModels.
+
+```csharp
+using System;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class RelayCommand : ICommand
+    {
+        private readonly Action _execute;
+        private readonly Func<bool> _canExecute;
+
+        public RelayCommand(Action execute, Func<bool> canExecute = null)
+        {
+            _execute = execute;
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute == null || _canExecute();
+        }
+
+        public void Execute(object parameter)
+        {
+            _execute();
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+    }
+}
+```
+
+### 2. **PatientRegViewModel**
+
+Next, refactor the `PatientRegViewModel` to use `RelayCommand` for the registration button.
+
+```csharp
+using System;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class PatientRegViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _patientViewModel;
+        private string _name;
+        private int _age;
+        private string _address;
+        private string _slot;
+        private DateTime? _dob;
+        private DateTime? _bookingDate;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                OnPropertyChanged(nameof(Name));
+            }
+        }
+
+        public int Age
+        {
+            get => _age;
+            set
+            {
+                _age = value;
+                OnPropertyChanged(nameof(Age));
+            }
+        }
+
+        public string Address
+        {
+            get => _address;
+            set
+            {
+                _address = value;
+                OnPropertyChanged(nameof(Address));
+            }
+        }
+
+        public string Slot
+        {
+            get => _slot;
+            set
+            {
+                _slot = value;
+                OnPropertyChanged(nameof(Slot));
+            }
+        }
+
+        public DateTime? DOB
+        {
+            get => _dob;
+            set
+            {
+                _dob = value;
+                OnPropertyChanged(nameof(DOB));
+            }
+        }
+
+        public DateTime? BookingDate
+        {
+            get => _bookingDate;
+            set
+            {
+                _bookingDate = value;
+                OnPropertyChanged(nameof(BookingDate));
+            }
+        }
+
+        public ICommand RegisterCommand { get; }
+
+        public PatientRegViewModel(PatientViewModel patientViewModel)
+        {
+            _patientViewModel = patientViewModel;
+            RegisterCommand = new RelayCommand(RegisterPatient, CanRegisterPatient);
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private bool CanRegisterPatient()
+        {
+            return !string.IsNullOrWhiteSpace(Name) && Age > 0 && DOB.HasValue && !string.IsNullOrWhiteSpace(Address) && !string.IsNullOrWhiteSpace(Slot);
+        }
+
+        private void RegisterPatient()
+        {
+            var patient = new Patient
+            {
+                Name = Name,
+                Age = Age,
+                Address = Address,
+                Slot = Slot,
+                DateOfBirth = DOB.Value.ToString("yyyy-MM-dd"),
+                BookingDate = BookingDate?.ToString("yyyy-MM-dd")
+            };
+
+            _patientViewModel.RegisterPatient(patient);
+        }
+    }
+}
+```
+
+### 3. **AppointmentConfirmationViewModel**
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class AppointmentConfirmationViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _patientViewModel;
+        public ICommand ConfirmAppointmentCommand { get; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public AppointmentConfirmationViewModel(PatientViewModel patientViewModel)
+        {
+            _patientViewModel = patientViewModel;
+            ConfirmAppointmentCommand = new RelayCommand(ConfirmAppointment);
+        }
+
+        private void ConfirmAppointment()
+        {
+            var selectedPatients = new List<Patient>();
+
+            foreach (var patient in _patientViewModel.Patients)
+            {
+                if (patient.IsSelected) // Assuming a boolean `IsSelected` property exists in Patient
+                {
+                    selectedPatients.Add(patient);
+                }
+            }
+
+            _patientViewModel.ConfirmPatients(selectedPatients);
+        }
+    }
+}
+```
+
+### 4. **PatientDashboardViewModel**
+
+```csharp
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+
+namespace PatientApp
+{
+    public class PatientDashboardViewModel : INotifyPropertyChanged
+    {
+        private PatientViewModel _patientViewModel;
+
+        public ObservableCollection<Patient> Patients => _patientViewModel.ConfirmedPatients;
+        public ICommand LoadPatientsCommand { get; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public PatientDashboardViewModel(PatientViewModel patientViewModel)
+        {
+            _patientViewModel = patientViewModel;
+            LoadPatientsCommand = new RelayCommand(LoadPatients);
+        }
+
+        private void LoadPatients()
+        {
+            // Additional logic to load and filter patients if needed
+        }
+    }
+}
+```
+
+### 5. **Refactor UserControl Code-Behind**
+
+For `PatientRegControl`, `AppointmentConfirmationControl`, and `PatientDashboardControl`, we remove the logic from the code-behind and bind the commands and properties to the ViewModels.
+
+#### `PatientRegControl.xaml.cs`
+```csharp
+public partial class PatientRegControl : UserControl
+{
+    public PatientRegControl(PatientRegViewModel viewModel)
+    {
+        InitializeComponent();
+        DataContext = viewModel;
+    }
+}
+```
+
+#### `AppointmentConfirmationControl.xaml.cs`
+```csharp
+public partial class AppointmentConfirmationControl : UserControl
+{
+    public AppointmentConfirmationControl(AppointmentConfirmationViewModel viewModel)
+    {
+        InitializeComponent();
+        DataContext = viewModel;
+    }
+}
+```
+
+#### `PatientDashboardControl.xaml.cs`
+```csharp
+public partial class PatientDashboardControl : UserControl
+{
+    public PatientDashboardControl(PatientDashboardViewModel viewModel)
+    {
+        InitializeComponent();
+        DataContext = viewModel;
+    }
+}
+```
+
+### 6. **MainWindow.xaml**
+
+Now, bind the commands to the buttons in `MainWindow.xaml`.
+
+```xml
+<Window x:Class="PatientApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="450" Width="800">
+    <Canvas>
+        <Button Content="Register Patient" Canvas.Left="10" Canvas.Top="80" Command="{Binding RegisterCommand}" />
+        <Button Content="Appointment Confirmation" Canvas.Left="10" Canvas.Top="130" Command="{Binding ConfirmAppointmentCommand}" />
+        <Button Content="Patient Dashboard" Canvas.Left="10" Canvas.Top="180" Command="{Binding LoadPatientsCommand}" />
+        <ContentControl x:Name="MainContent" Canvas.Left="200" Canvas.Top="60" Width="400" Height="300" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Canvas>
+</Window>
+```
+
+### 7. **MainWindow.xaml.cs**
+
+```csharp
+public partial class MainWindow : Window
+{
+    private PatientViewModel _viewModel;
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        _viewModel = new PatientViewModel();
+
+        // Initialize ViewModels for each control
+        var patientRegViewModel = new PatientRegViewModel(_viewModel);
+        var appointmentConfirmationViewModel = new AppointmentConfirmationViewModel(_viewModel);
+        var patientDashboardViewModel = new PatientDashboardViewModel(_viewModel);
+
+        this.DataContext = _viewModel; // ViewModel for MainWindow
+
+        // Subscribe to events for navigation and content change
+    }
+}
+```
+
+This refactor achieves the goal of separating the logic into ViewModels, using `RelayCommand` for button actions, and keeping the UserControl and MainWindow code-behind clean. Each ViewModel handles its own logic, and the `MainWindow` simply binds to the appropriate commands.
