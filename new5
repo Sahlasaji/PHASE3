@@ -1,1 +1,158 @@
+Here is the XAML for your `MainWindow.xaml` and the associated UserControls (`PatientRegControl`, `AppointmentConfirmationControl`, and `PatientDashboardControl`):
 
+### 1. **MainWindow.xaml**
+This XAML binds buttons to commands and uses a `ContentControl` to display the different user controls based on the selected command.
+
+```xml
+<Window x:Class="PatientApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Patient Management" Height="450" Width="800">
+
+    <Window.DataContext>
+        <local:PatientViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <!-- Button for Registering Patient -->
+        <Button Content="Register Patient" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" 
+                Width="150" Height="40" 
+                Command="{Binding RegisterCommand}" />
+
+        <!-- Button for Appointment Confirmation -->
+        <Button Content="Appointment Confirmation" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" 
+                Width="200" Height="40" 
+                Margin="0,60,0,0" 
+                Command="{Binding ConfirmAppointmentCommand}" />
+
+        <!-- Button for Viewing Patient Dashboard -->
+        <Button Content="Patient Dashboard" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" 
+                Width="150" Height="40" 
+                Margin="0,120,0,0" 
+                Command="{Binding LoadPatientsCommand}" />
+
+        <!-- ContentControl for loading different user controls -->
+        <ContentControl x:Name="MainContent" 
+                        HorizontalAlignment="Center" VerticalAlignment="Center" 
+                        Margin="200,60,200,60" />
+    </Grid>
+</Window>
+```
+
+### 2. **PatientRegControl.xaml**
+This is the `UserControl` for registering a patient. It binds the input fields to the `PatientRegViewModel` properties and the button to the `RegisterCommand`.
+
+```xml
+<UserControl x:Class="PatientApp.PatientRegControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="400" Height="300">
+    <Grid>
+        <TextBlock Text="Patient Registration" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"/>
+        
+        <StackPanel Margin="50,50,50,10">
+            <TextBox Text="{Binding Name}" Width="300" Margin="0,5" PlaceholderText="Name"/>
+            <TextBox Text="{Binding Age}" Width="300" Margin="0,5" PlaceholderText="Age"/>
+            <TextBox Text="{Binding Address}" Width="300" Margin="0,5" PlaceholderText="Address"/>
+            <ComboBox ItemsSource="{Binding AvailableSlots}" SelectedItem="{Binding Slot}" Width="300" Margin="0,5"/>
+            <DatePicker SelectedDate="{Binding DOB}" Width="300" Margin="0,5"/>
+            <Button Content="Register" Command="{Binding RegisterCommand}" Width="300" Margin="0,20"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
+```
+
+### 3. **AppointmentConfirmationControl.xaml**
+This `UserControl` handles confirming the appointments for selected patients.
+
+```xml
+<UserControl x:Class="PatientApp.AppointmentConfirmationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="400" Height="300">
+    <Grid>
+        <TextBlock Text="Appointment Confirmation" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"/>
+        
+        <ListBox ItemsSource="{Binding Patients}" 
+                 DisplayMemberPath="Name" 
+                 SelectedItem="{Binding SelectedPatient}" 
+                 Margin="50,50,50,10" Height="150"/>
+
+        <Button Content="Confirm Appointment" 
+                Command="{Binding ConfirmAppointmentCommand}" 
+                Width="300" 
+                HorizontalAlignment="Center" 
+                Margin="0,20,0,0"/>
+    </Grid>
+</UserControl>
+```
+
+### 4. **PatientDashboardControl.xaml**
+This `UserControl` will display the list of confirmed patients.
+
+```xml
+<UserControl x:Class="PatientApp.PatientDashboardControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="400" Height="300">
+    <Grid>
+        <TextBlock Text="Patient Dashboard" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"/>
+        
+        <ListBox ItemsSource="{Binding Patients}" 
+                 DisplayMemberPath="Name" 
+                 Margin="50,50,50,10" Height="200"/>
+    </Grid>
+</UserControl>
+```
+
+### 5. **PatientViewModel (for binding)**
+Make sure that your `PatientViewModel` contains the properties and commands that the UI needs:
+
+```csharp
+public class PatientViewModel : INotifyPropertyChanged
+{
+    public ObservableCollection<Patient> Patients { get; set; }
+    public ObservableCollection<Patient> ConfirmedPatients { get; set; }
+
+    public ICommand RegisterCommand { get; }
+    public ICommand ConfirmAppointmentCommand { get; }
+    public ICommand LoadPatientsCommand { get; }
+
+    public PatientViewModel()
+    {
+        Patients = new ObservableCollection<Patient>();
+        ConfirmedPatients = new ObservableCollection<Patient>();
+
+        RegisterCommand = new RelayCommand(RegisterPatient);
+        ConfirmAppointmentCommand = new RelayCommand(ConfirmAppointment);
+        LoadPatientsCommand = new RelayCommand(LoadPatients);
+    }
+
+    private void RegisterPatient()
+    {
+        // Logic to register a patient
+    }
+
+    private void ConfirmAppointment()
+    {
+        // Logic to confirm appointment
+    }
+
+    private void LoadPatients()
+    {
+        // Logic to load patients
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+}
+```
+
+### **Data Binding Overview**
+- In `MainWindow.xaml`, we bind buttons to commands in the `PatientViewModel`.
+- In each UserControl (`PatientRegControl`, `AppointmentConfirmationControl`, `PatientDashboardControl`), we bind properties like `Name`, `Age`, and `Slot` to the corresponding ViewModel properties.
+- The buttons in the UserControls are bound to the appropriate commands (`RegisterCommand`, `ConfirmAppointmentCommand`, `LoadPatientsCommand`) in the respective ViewModel.
+
+This setup ensures that your UI logic is completely separated from the code-behind, utilizing MVVM architecture to bind data and commands efficiently.
